@@ -2,6 +2,7 @@ package dal
 
 import (
 	"github.com/zenpk/chatbone/util"
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
@@ -27,8 +28,15 @@ func (m *Message) Init(conf *util.Configuration, client *mongo.Client) {
 }
 
 func (m *Message) SelectById(id string) (*Message, error) {
-	m.client.Database(m.conf.MongoDbName).Collection(m.collectionName)
-	return nil, nil
+	collection := m.client.Database(m.conf.MongoDbName).Collection(m.collectionName)
+	filter := bson.D{{"Id", id}}
+	result := new(Message)
+	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
+	defer cancel()
+	if err := collection.FindOne(ctx, filter).Decode(result); err != nil {
+		return nil, err
+	}
+	return result, nil
 }
 
 func (m *Message) SelectByUserId(id int64) ([]*Message, error) {

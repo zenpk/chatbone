@@ -6,15 +6,15 @@ import (
 )
 
 type Configuration struct {
-	HttpAddress    string `json:"httpAddress"`
-	InvitationCode string `json:"invitationCode"`
-	OAuthEndPoint  string `json:"oAuthEndPoint"`
-	JwtIssuer      string `json:"jwtIssuer"`
-	LogFilePath    string `json:"logFilePath"`
-	MongoDbUri     string `json:"mongoDbUri"`
-	MongoDbName    string `json:"mongoDbName"`
-	OpenAiOrgId    string `json:"openAiOrgId"`
-	OpenAiApiKey   string `json:"openAiApiKey"`
+	HttpAddress   string `json:"httpAddress"`
+	TimeoutSecond int64  `json:"timeoutSecond"`
+	OAuthEndPoint string `json:"oAuthEndPoint"`
+	JwtIssuer     string `json:"jwtIssuer"`
+	LogFilePath   string `json:"logFilePath"`
+	MongoDbUri    string `json:"mongoDbUri"`
+	MongoDbName   string `json:"mongoDbName"`
+	OpenAiOrgId   string `json:"openAiOrgId"`
+	OpenAiApiKey  string `json:"openAiApiKey"`
 }
 
 func (c *Configuration) Init(mode string) error {
