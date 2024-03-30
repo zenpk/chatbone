@@ -11,7 +11,9 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/zenpk/chatbone/repo"
+	"github.com/zenpk/chatbone/dal"
+	"github.com/zenpk/chatbone/handler"
+	"github.com/zenpk/chatbone/service"
 	"github.com/zenpk/chatbone/util"
 )
 
@@ -28,13 +30,13 @@ func main() {
 		log.Println("gracefully exited")
 	}()
 
-	conf := new(util.Configuration)
-	if err := conf.Init(*mode); err != nil {
+	conf, err := util.InitConf(*mode)
+	if err != nil {
 		panic(err)
 	}
 
-	logger := new(util.Logger)
-	if err := logger.Init(conf); err != nil {
+	logger, err := util.InitLogger(conf)
+	if err != nil {
 		panic(err)
 	}
 	defer func() {
@@ -44,8 +46,22 @@ func main() {
 		}
 	}()
 
-	mongoDb := new(repo.Mongo)
-	if err := mongoDb.Init(conf); err != nil {
+	db, err := dal.Init(conf)
+	if err != nil {
+		panic(err)
+	}
+
+	messageService, err := service.InitMessage(conf, db)
+	if err != nil {
+		panic(err)
+	}
+	openAiService, err := service.InitOpenAi(conf, db)
+	if err != nil {
+		panic(err)
+	}
+
+	hd, err := handler.Init(conf, messageService, openAiService)
+	if err != nil {
 		panic(err)
 	}
 

@@ -18,7 +18,8 @@ type User struct {
 	collectionName string
 }
 
-func (u *User) Init(conf *util.Configuration, client *mongo.Client) error {
+func initUser(conf *util.Configuration, client *mongo.Client) (*User, error) {
+	u := new(User)
 	u.conf = conf
 	u.client = client
 	u.collectionName = "user"
@@ -29,7 +30,7 @@ func (u *User) Init(conf *util.Configuration, client *mongo.Client) error {
 		Keys: bson.M{"Id": 1},
 	}
 	_, err := collection.Indexes().CreateOne(ctx, mod)
-	return err
+	return u, err
 }
 
 func (u *User) SelectByIdInsertIfNotExists(id string) (*User, error) {

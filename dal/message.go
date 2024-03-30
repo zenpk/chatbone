@@ -23,7 +23,8 @@ type Message struct {
 	collectionName string
 }
 
-func (m *Message) Init(conf *util.Configuration, client *mongo.Client) error {
+func initMessage(conf *util.Configuration, client *mongo.Client) (*Message, error) {
+	m := new(Message)
 	m.conf = conf
 	m.client = client
 	m.collectionName = "message"
@@ -35,13 +36,13 @@ func (m *Message) Init(conf *util.Configuration, client *mongo.Client) error {
 	}
 	_, err := collection.Indexes().CreateOne(ctx, mod)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	mod = mongo.IndexModel{
 		Keys: bson.M{"Id": 1},
 	}
 	_, err = collection.Indexes().CreateOne(ctx, mod)
-	return err
+	return m, err
 }
 
 func (m *Message) SelectById(id string) (*Message, error) {

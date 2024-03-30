@@ -8,6 +8,7 @@ import (
 type ILogger interface {
 	Printf(format string, args ...interface{})
 	Println(any ...interface{})
+	Close() error
 }
 
 type Logger struct {
@@ -15,17 +16,18 @@ type Logger struct {
 	logFile *os.File
 }
 
-func (l *Logger) Init(conf *Configuration) error {
+func InitLogger(conf *Configuration) (*Logger, error) {
+	l := new(Logger)
 	l.Logger = new(log.Logger)
 	logFile, err := os.OpenFile(conf.LogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)
 	if err != nil {
-		return nil
+		return l, nil
 	}
 	l.logFile = logFile
 	l.Logger.SetOutput(logFile)
 	// remove timestamp
 	l.Logger.SetFlags(0)
-	return nil
+	return l, nil
 }
 
 func (l *Logger) Close() error {

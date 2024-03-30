@@ -8,7 +8,14 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-func Init(conf *util.Configuration) (*mongo.Client, error) {
+type Database struct {
+	History *History
+	Message *Message
+	Model   *Model
+	User    *User
+}
+
+func Init(conf *util.Configuration) (*Database, error) {
 	// use the SetServerAPIOptions() method to set the version of the Stable API on the client
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(conf.MongoDbUri).SetServerAPIOptions(serverAPI)
@@ -17,5 +24,21 @@ func Init(conf *util.Configuration) (*mongo.Client, error) {
 	if err != nil {
 		return nil, err
 	}
-	return client, nil
+	history, err := initHistory(conf, client)
+	if err != nil {
+		return nil, err
+	}
+	message, err := initMessage(conf, client)
+	if err != nil {
+		return nil, err
+	}
+	model, err := initModel(conf, client)
+	if err != nil {
+		return nil, err
+	}
+	user, err := initUser(conf, client)
+	if err != nil {
+		return nil, err
+	}
+	return &Database{history, message, model, user}, nil
 }

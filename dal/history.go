@@ -18,7 +18,8 @@ type History struct {
 	collectionName string
 }
 
-func (h *History) Init(conf *util.Configuration, client *mongo.Client) error {
+func initHistory(conf *util.Configuration, client *mongo.Client) (*History, error) {
+	h := new(History)
 	h.conf = conf
 	h.client = client
 	h.collectionName = "history"
@@ -29,7 +30,7 @@ func (h *History) Init(conf *util.Configuration, client *mongo.Client) error {
 		Keys: bson.D{{"Timestamp", 1}, {"UserId", 1}},
 	}
 	_, err := collection.Indexes().CreateOne(ctx, mod)
-	return err
+	return h, err
 }
 
 func (h *History) SelectByUserIdAfter(userId string, timestamp int64) ([]*History, error) {

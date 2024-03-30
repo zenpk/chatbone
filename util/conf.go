@@ -17,14 +17,15 @@ type Configuration struct {
 	OpenAiApiKey  string `json:"openAiApiKey"`
 }
 
-func (c *Configuration) Init(mode string) error {
+func InitConf(mode string) (*Configuration, error) {
+	c := new(Configuration)
 	filename := "conf-" + mode + ".json"
 	confJson, err := os.ReadFile("./" + filename)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if err := json.Unmarshal(confJson, &c); err != nil {
-		return err
+		return nil, err
 	}
-	return nil
+	return c, nil
 }

@@ -19,10 +19,12 @@ type Model struct {
 	collectionName string
 }
 
-func (m *Model) Init(conf *util.Configuration, client *mongo.Client) {
+func initModel(conf *util.Configuration, client *mongo.Client) (*Model, error) {
+	m := new(Model)
 	m.conf = conf
 	m.client = client
 	m.collectionName = "message"
+	return m, nil
 }
 
 func (m *Model) SelectByProviderAndName(provider, name string) (*Model, error) {
