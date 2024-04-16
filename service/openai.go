@@ -5,8 +5,14 @@ import (
 	"github.com/zenpk/chatbone/util"
 )
 
-type OpenAi struct{}
+type OpenAi struct {
+	conf *util.Configuration
+	db   *dal.Database
+}
 
 func InitOpenAi(conf *util.Configuration, db *dal.Database) (*OpenAi, error) {
-	return nil, nil
+	openAi := new(OpenAi)
+	openAi.conf = conf
+	openAi.db = db
+	return openAi, nil
 }
