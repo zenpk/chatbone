@@ -2,12 +2,12 @@ package handler
 
 import (
 	"context"
-	"errors"
 	"log"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	"github.com/zenpk/chatbone/dto"
 	"github.com/zenpk/chatbone/service"
 	"github.com/zenpk/chatbone/util"
 )
@@ -27,19 +27,12 @@ func Init(conf *util.Configuration, messageService *service.Message, openAiServi
 	h.e = e
 	e.Use(middleware.Recover())
 	e.HTTPErrorHandler = func(err error, c echo.Context) {
-		switch {
-		case errors.Is(err, NotFound):
-			if err := c.JSON(http.StatusNotFound, nil); err != nil {
-				e.Logger.Print(err)
-			}
-		case errors.Is(err, AuthenticationFailed):
-			if err := c.JSON(http.StatusUnauthorized, model.MessageRes{Message: err.Error()}); err != nil {
-				e.Logger.Print(err)
-			}
-		default:
-			if err := c.JSON(http.StatusInternalServerError, model.MessageRes{Message: "something went wrong"}); err != nil {
-				e.Logger.Print(err)
-			}
+		errCode, ok := c.Get("code").(int)
+		if !ok {
+			errCode = dto.ErrUnknown
+		}
+		if err := c.JSON(http.StatusOK, dto.CommonResp{Code: errCode, Msg: err.Error()}); err != nil {
+			e.Logger.Print(err)
 		}
 	}
 	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
