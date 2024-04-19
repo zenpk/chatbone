@@ -15,7 +15,7 @@ type Database struct {
 	User    *User
 }
 
-func Init(conf *util.Configuration) (*Database, error) {
+func Init(conf *util.Configuration, logger util.ILogger) (*Database, error) {
 	// use the SetServerAPIOptions() method to set the version of the Stable API on the client
 	serverAPI := options.ServerAPI(options.ServerAPIVersion1)
 	opts := options.Client().ApplyURI(conf.MongoDbUri).SetServerAPIOptions(serverAPI)
@@ -24,19 +24,19 @@ func Init(conf *util.Configuration) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	history, err := initHistory(conf, client)
+	history, err := initHistory(conf, client, logger)
 	if err != nil {
 		return nil, err
 	}
-	message, err := initMessage(conf, client)
+	message, err := initMessage(conf, client, logger)
 	if err != nil {
 		return nil, err
 	}
-	model, err := initModel(conf, client)
+	model, err := initModel(conf, client, logger)
 	if err != nil {
 		return nil, err
 	}
-	user, err := initUser(conf, client)
+	user, err := initUser(conf, client, logger)
 	if err != nil {
 		return nil, err
 	}

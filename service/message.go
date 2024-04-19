@@ -5,10 +5,18 @@ import (
 	"github.com/zenpk/chatbone/util"
 )
 
-type Message struct{}
+type Message struct {
+	conf   *util.Configuration
+	logger util.ILogger
+	db     *dal.Database
+}
 
-func InitMessage(conf *util.Configuration, db *dal.Database) (*Message, error) {
-	return nil, nil
+func InitMessage(conf *util.Configuration, logger util.ILogger, db *dal.Database) (*Message, error) {
+	m := new(Message)
+	m.conf = conf
+	m.logger = logger
+	m.db = db
+	return m, nil
 }
 
 func (m *Message) GetMessages(userId int64) error {

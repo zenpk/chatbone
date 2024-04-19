@@ -15,13 +15,15 @@ type Model struct {
 	SupportImage bool
 
 	conf           *util.Configuration
+	logger         util.ILogger
 	client         *mongo.Client
 	collectionName string
 }
 
-func initModel(conf *util.Configuration, client *mongo.Client) (*Model, error) {
+func initModel(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*Model, error) {
 	m := new(Model)
 	m.conf = conf
+	m.logger = logger
 	m.client = client
 	m.collectionName = "message"
 	return m, nil

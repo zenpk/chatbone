@@ -19,13 +19,15 @@ type Message struct {
 	Last      bool // if is the automatically saved last message
 
 	conf           *util.Configuration
+	logger         util.ILogger
 	client         *mongo.Client
 	collectionName string
 }
 
-func initMessage(conf *util.Configuration, client *mongo.Client) (*Message, error) {
+func initMessage(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*Message, error) {
 	m := new(Message)
 	m.conf = conf
+	m.logger = logger
 	m.client = client
 	m.collectionName = "message"
 	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)

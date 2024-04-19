@@ -14,13 +14,15 @@ type User struct {
 	Clipboard     string
 
 	conf           *util.Configuration
+	logger         util.ILogger
 	client         *mongo.Client
 	collectionName string
 }
 
-func initUser(conf *util.Configuration, client *mongo.Client) (*User, error) {
+func initUser(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*User, error) {
 	u := new(User)
 	u.conf = conf
+	u.logger = logger
 	u.client = client
 	u.collectionName = "user"
 	ctx, cancel := util.GetTimeoutContext(u.conf.TimeoutSecond)

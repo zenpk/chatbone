@@ -46,16 +46,16 @@ func main() {
 		}
 	}()
 
-	db, err := dal.Init(conf)
+	db, err := dal.Init(conf, logger)
 	if err != nil {
 		panic(err)
 	}
 
-	messageService, err := service.InitMessage(conf, db)
+	messageService, err := service.InitMessage(conf, logger, db)
 	if err != nil {
 		panic(err)
 	}
-	openAiService, err := service.InitOpenAi(conf, db)
+	openAiService, err := service.InitOpenAi(conf, logger, db)
 	if err != nil {
 		panic(err)
 	}

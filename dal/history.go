@@ -14,13 +14,15 @@ type History struct {
 	Cost      float64
 
 	conf           *util.Configuration
+	logger         util.ILogger
 	client         *mongo.Client
 	collectionName string
 }
 
-func initHistory(conf *util.Configuration, client *mongo.Client) (*History, error) {
+func initHistory(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*History, error) {
 	h := new(History)
 	h.conf = conf
+	h.logger = logger
 	h.client = client
 	h.collectionName = "history"
 	ctx, cancel := util.GetTimeoutContext(h.conf.TimeoutSecond)
