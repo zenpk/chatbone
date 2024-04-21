@@ -21,7 +21,7 @@ type OpenAi struct {
 	err    error
 }
 
-func InitOpenAi(conf *util.Configuration, logger util.ILogger, db *dal.Database) (*OpenAi, error) {
+func NewOpenAi(conf *util.Configuration, logger util.ILogger, db *dal.Database) (*OpenAi, error) {
 	o := new(OpenAi)
 	o.conf = conf
 	o.logger = logger
@@ -30,15 +30,18 @@ func InitOpenAi(conf *util.Configuration, logger util.ILogger, db *dal.Database)
 	return o, nil
 }
 
-func (o *OpenAi) Chat(sessionId string, user *dal.User, model *dal.Model, messages []*dto.OpenAiMessage, responseChan chan<- string) error {
-	if model == nil || messages == nil {
+func (o *OpenAi) Chat(sessionId string, user *dal.User, model *dal.Model, reqBody *dto.OpenAiReq, responseChan chan<- string) error {
+	if sessionId == "" || user == nil || model == nil || reqBody == nil || responseChan == nil {
 		return errors.Join(errors.New("chat invalid input"), o.err)
 	}
-	reqBody, err := json.Marshal(messages)
+	if err := o.checkRequestBody(reqBody); err != nil {
+		return errors.Join(err, o.err)
+	}
+	reqByte, err := json.Marshal(reqBody)
 	if err != nil {
 		return errors.Join(err, o.err)
 	}
-	req, err := http.NewRequest("POST", util.OpenAiEndPoint, bytes.NewBuffer(reqBody))
+	req, err := http.NewRequest("POST", util.OpenAiEndPoint, bytes.NewBuffer(reqByte))
 	if err != nil {
 		return errors.Join(err, o.err)
 	}
@@ -53,13 +56,13 @@ func (o *OpenAi) Chat(sessionId string, user *dal.User, model *dal.Model, messag
 	}
 	defer resp.Body.Close()
 
-	responseMessages := make([]*dto.OpenAiMessage, 0)
+	responseMessages := make([]dto.OpenAiMessage, 0)
 	const bufferSize = 4096
-	var buf bytes.Buffer
 	temp := make([]byte, bufferSize)
 	lastLen := 0
 
 	for {
+		var buf bytes.Buffer
 		n, err := resp.Body.Read(temp[lastLen:])
 		if err != nil {
 			if err != io.EOF {
@@ -71,12 +74,12 @@ func (o *OpenAi) Chat(sessionId string, user *dal.User, model *dal.Model, messag
 			// append read bytes to the buffer
 			buf.Write(temp[:lastLen+n])
 			lastLen = 0
-			message := new(dto.OpenAiMessage)
+			var message dto.OpenAiMessage
 
 			for {
 				// try to decode the object
 				dec := json.NewDecoder(&buf)
-				if err := dec.Decode(message); err != nil {
+				if err := dec.Decode(&message); err != nil {
 					if err == io.EOF {
 						// not enough data to decode, save the data to temp and break
 						lastLen = buf.Len()
@@ -99,7 +102,7 @@ func (o *OpenAi) Chat(sessionId string, user *dal.User, model *dal.Model, messag
 		}
 	}
 	// update the history
-	inToken, err := o.countTokensFromMessages(messages, model)
+	inToken, err := o.countTokensFromMessages(reqBody.Messages, model)
 	if err != nil {
 		return errors.Join(err, o.err)
 	}
@@ -121,7 +124,7 @@ func (o *OpenAi) Chat(sessionId string, user *dal.User, model *dal.Model, messag
 	return nil
 }
 
-func (o *OpenAi) countTokensFromMessages(messages []*dto.OpenAiMessage, model *dal.Model) (int, error) {
+func (o *OpenAi) countTokensFromMessages(messages []dto.OpenAiMessage, model *dal.Model) (int, error) {
 	tke, err := tiktoken.GetEncoding(model.Encoding)
 	if err != nil {
 		return 0, err
@@ -143,4 +146,39 @@ func (o *OpenAi) countTokensFromMessages(messages []*dto.OpenAiMessage, model *d
 	}
 	numTokens += 3 // every reply is primed with <|start|>assistant<|message|>
 	return numTokens, nil
+}
+
+func (o *OpenAi) checkRequestBody(req *dto.OpenAiReq) error {
+	// check model
+	models, err := o.db.Model.SelectAll()
+	if err != nil {
+		return err
+	}
+	modelFound := false
+	for _, model := range models {
+		if req.Model == model.Name && model.ProviderId == dal.ProviderOpenAi {
+			modelFound = true
+			break
+		}
+	}
+	if !modelFound {
+		return errors.New("unsupported OpenAI model")
+	}
+	// check messages
+	messageLen := 0
+	for _, message := range req.Messages {
+		if message.Role != "user" && message.Role != "assistant" && message.Role != "system" {
+			return errors.New("unsupported message role")
+		}
+		if message.Content == "" {
+			return errors.New("message content should not be empty")
+		}
+		messageLen += len(message.Content)
+		if messageLen > o.conf.ReqLengthLimit {
+			return errors.New("message content too long")
+		}
+	}
+	// always use stream
+	req.Stream = true
+	return nil
 }

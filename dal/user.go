@@ -20,7 +20,7 @@ type User struct {
 	err            error
 }
 
-func initUser(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*User, error) {
+func newUser(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*User, error) {
 	u := new(User)
 	u.conf = conf
 	u.logger = logger

@@ -20,7 +20,7 @@ type Logger struct {
 	logFile *os.File
 }
 
-func InitLogger(conf *Configuration) (*Logger, error) {
+func NewLogger(conf *Configuration) (*Logger, error) {
 	l := new(Logger)
 	l.Logger = new(log.Logger)
 	logFile, err := os.OpenFile(conf.LogFilePath, os.O_RDWR|os.O_CREATE|os.O_APPEND, 0o666)

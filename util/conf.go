@@ -6,18 +6,21 @@ import (
 )
 
 type Configuration struct {
-	HttpAddress   string `json:"httpAddress"`
-	TimeoutSecond int64  `json:"timeoutSecond"`
-	OAuthEndPoint string `json:"oAuthEndPoint"`
-	JwtIssuer     string `json:"jwtIssuer"`
-	LogFilePath   string `json:"logFilePath"`
-	MongoDbUri    string `json:"mongoDbUri"`
-	MongoDbName   string `json:"mongoDbName"`
-	OpenAiOrgId   string `json:"openAiOrgId"`
-	OpenAiApiKey  string `json:"openAiApiKey"`
+	TimeoutSecond    int    `json:"timeoutSecond"`
+	HttpAddress      string `json:"httpAddress"`
+	LogFilePath      string `json:"logFilePath"`
+	OAuthRefreshPath string `json:"oAuthRefreshPath"`
+	OAuthJwkPath     string `json:"oAuthJwkPath"`
+	JwtIssuer        string `json:"jwtIssuer"`
+	JwtClientId      string `json:"jwtClientId"`
+	MongoDbUri       string `json:"mongoDbUri"`
+	MongoDbName      string `json:"mongoDbName"`
+	OpenAiOrgId      string `json:"openAiOrgId"`
+	OpenAiApiKey     string `json:"openAiApiKey"`
+	ReqLengthLimit   int    `json:"reqLengthLimit"`
 }
 
-func InitConf(mode string) (*Configuration, error) {
+func NewConf(mode string) (*Configuration, error) {
 	c := new(Configuration)
 	filename := "conf-" + mode + ".json"
 	confJson, err := os.ReadFile("./" + filename)

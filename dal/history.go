@@ -24,7 +24,7 @@ type History struct {
 	err            error
 }
 
-func initHistory(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*History, error) {
+func newHistory(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*History, error) {
 	h := new(History)
 	h.conf = conf
 	h.logger = logger
@@ -75,7 +75,7 @@ func (h *History) SelectByUserIdAfter(userId string, timestamp int64) ([]*Histor
 
 func (h *History) Insert(history *History) error {
 	if history == nil || history.SessionId == "" || history.UserId == "" || history.Model == "" ||
-		history.Provider == "" || history.Timestamp <= 0 || history.InTokenCount <= 0 || history.OutTokenCount <= 0 {
+		history.ProviderId <= 0 || history.Timestamp <= 0 || history.InTokenCount <= 0 || history.OutTokenCount <= 0 {
 		return errors.Join(errors.New("insert invalid input"), h.err)
 	}
 	collection := h.client.Database(h.conf.MongoDbName).Collection(h.collectionName)

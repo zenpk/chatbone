@@ -11,7 +11,7 @@ type Model struct {
 	hardcoded []*Model
 }
 
-func initModel() (*Model, error) {
+func newModel() (*Model, error) {
 	m := new(Model)
 	m.hardcoded = append(m.hardcoded, &Model{
 		Name:         "gpt-4-turbo",

@@ -11,7 +11,7 @@ type Message struct {
 	db     *dal.Database
 }
 
-func InitMessage(conf *util.Configuration, logger util.ILogger, db *dal.Database) (*Message, error) {
+func NewMessage(conf *util.Configuration, logger util.ILogger, db *dal.Database) (*Message, error) {
 	m := new(Message)
 	m.conf = conf
 	m.logger = logger

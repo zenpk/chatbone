@@ -30,12 +30,12 @@ func main() {
 		log.Println("gracefully exited")
 	}()
 
-	conf, err := util.InitConf(*mode)
+	conf, err := util.NewConf(*mode)
 	if err != nil {
 		panic(err)
 	}
 
-	logger, err := util.InitLogger(conf)
+	logger, err := util.NewLogger(conf)
 	if err != nil {
 		panic(err)
 	}
@@ -46,21 +46,21 @@ func main() {
 		}
 	}()
 
-	db, err := dal.Init(conf, logger)
+	db, err := dal.New(conf, logger)
 	if err != nil {
 		panic(err)
 	}
 
-	messageService, err := service.InitMessage(conf, logger, db)
+	messageService, err := service.NewMessage(conf, logger, db)
 	if err != nil {
 		panic(err)
 	}
-	openAiService, err := service.InitOpenAi(conf, logger, db)
+	openAiService, err := service.NewOpenAi(conf, logger, db)
 	if err != nil {
 		panic(err)
 	}
 
-	hd, err := handler.Init(conf, messageService, openAiService)
+	hd, err := handler.New(conf, messageService, openAiService)
 	if err != nil {
 		panic(err)
 	}

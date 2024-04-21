@@ -7,6 +7,8 @@ require (
 	go.mongodb.org/mongo-driver v1.14.0
 )
 
+require github.com/cristalhq/jwt/v5 v5.4.0 // indirect
+
 require (
 	github.com/dlclark/regexp2 v1.10.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect

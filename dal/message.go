@@ -28,7 +28,7 @@ type Message struct {
 	err            error
 }
 
-func initMessage(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*Message, error) {
+func newMessage(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*Message, error) {
 	m := new(Message)
 	m.conf = conf
 	m.logger = logger
