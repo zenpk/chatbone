@@ -17,6 +17,7 @@ type User struct {
 	logger         util.ILogger
 	client         *mongo.Client
 	collectionName string
+	err            error
 }
 
 func initUser(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*User, error) {
@@ -25,6 +26,7 @@ func initUser(conf *util.Configuration, client *mongo.Client, logger util.ILogge
 	u.logger = logger
 	u.client = client
 	u.collectionName = "user"
+	u.err = errors.New("at User table")
 	ctx, cancel := util.GetTimeoutContext(u.conf.TimeoutSecond)
 	defer cancel()
 	collection := u.client.Database(u.conf.MongoDbName).Collection(u.collectionName)
@@ -32,7 +34,7 @@ func initUser(conf *util.Configuration, client *mongo.Client, logger util.ILogge
 		Keys: bson.M{"Id": 1},
 	}
 	_, err := collection.Indexes().CreateOne(ctx, mod)
-	return u, err
+	return u, errors.Join(err, u.err)
 }
 
 func (u *User) SelectByIdInsertIfNotExists(id string) (*User, error) {
@@ -47,11 +49,11 @@ func (u *User) SelectByIdInsertIfNotExists(id string) (*User, error) {
 			result.LastTopUpTime = -1
 			result.Clipboard = ""
 			if _, err := collection.InsertOne(ctx, result); err != nil {
-				return nil, err
+				return nil, errors.Join(err, u.err)
 			}
 			return result, nil
 		}
-		return nil, err
+		return nil, errors.Join(err, u.err)
 	}
 	return result, nil
 }
@@ -63,7 +65,7 @@ func (u *User) UpdateClipboard(id, clipboard string) error {
 	ctx, cancel := util.GetTimeoutContext(u.conf.TimeoutSecond)
 	defer cancel()
 	if _, err := collection.UpdateOne(ctx, filter, update); err != nil {
-		return err
+		return errors.Join(err, u.err)
 	}
 	return nil
 }

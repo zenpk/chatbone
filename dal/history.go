@@ -1,22 +1,27 @@
 package dal
 
 import (
+	"errors"
+
 	"github.com/zenpk/chatbone/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
 type History struct {
-	Timestamp int64
-	UserId    string
-	Model     string
-	Provider  string
-	Cost      float64
+	SessionId     string
+	Timestamp     int64
+	UserId        string
+	Model         string
+	ProviderId    int
+	InTokenCount  int
+	OutTokenCount int
 
 	conf           *util.Configuration
 	logger         util.ILogger
 	client         *mongo.Client
 	collectionName string
+	err            error
 }
 
 func initHistory(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*History, error) {
@@ -25,14 +30,31 @@ func initHistory(conf *util.Configuration, client *mongo.Client, logger util.ILo
 	h.logger = logger
 	h.client = client
 	h.collectionName = "history"
+	h.err = errors.New("at History table")
 	ctx, cancel := util.GetTimeoutContext(h.conf.TimeoutSecond)
 	defer cancel()
 	collection := h.client.Database(h.conf.MongoDbName).Collection(h.collectionName)
 	mod := mongo.IndexModel{
-		Keys: bson.D{{"Timestamp", 1}, {"UserId", 1}},
+		Keys: bson.M{"Timestamp": 1, "UserId": 1},
 	}
 	_, err := collection.Indexes().CreateOne(ctx, mod)
-	return h, err
+	return h, errors.Join(err, h.err)
+}
+
+func (h *History) SelectBySessionId(sessionId string) ([]*History, error) {
+	collection := h.client.Database(h.conf.MongoDbName).Collection(h.collectionName)
+	filter := bson.M{"SessionId": sessionId}
+	ctx, cancel := util.GetTimeoutContext(h.conf.TimeoutSecond)
+	defer cancel()
+	cursor, err := collection.Find(ctx, filter)
+	if err != nil {
+		return nil, errors.Join(err, h.err)
+	}
+	result := make([]*History, 0)
+	if err := cursor.All(ctx, &result); err != nil {
+		return nil, errors.Join(err, h.err)
+	}
+	return result, nil
 }
 
 func (h *History) SelectByUserIdAfter(userId string, timestamp int64) ([]*History, error) {
@@ -42,21 +64,25 @@ func (h *History) SelectByUserIdAfter(userId string, timestamp int64) ([]*Histor
 	defer cancel()
 	cursor, err := collection.Find(ctx, filter)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, h.err)
 	}
 	result := make([]*History, 0)
 	if err := cursor.All(ctx, &result); err != nil {
-		return nil, err
+		return nil, errors.Join(err, h.err)
 	}
 	return result, nil
 }
 
 func (h *History) Insert(history *History) error {
+	if history == nil || history.SessionId == "" || history.UserId == "" || history.Model == "" ||
+		history.Provider == "" || history.Timestamp <= 0 || history.InTokenCount <= 0 || history.OutTokenCount <= 0 {
+		return errors.Join(errors.New("insert invalid input"), h.err)
+	}
 	collection := h.client.Database(h.conf.MongoDbName).Collection(h.collectionName)
 	ctx, cancel := util.GetTimeoutContext(h.conf.TimeoutSecond)
 	defer cancel()
 	if _, err := collection.InsertOne(ctx, history); err != nil {
-		return err
+		return errors.Join(err, h.err)
 	}
 	return nil
 }

@@ -1,5 +1,5 @@
 package dal
 
 const (
-	ProviderOpenAi = "openai"
+	ProviderOpenAi = 1
 )

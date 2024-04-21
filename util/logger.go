@@ -8,6 +8,10 @@ import (
 type ILogger interface {
 	Printf(format string, args ...interface{})
 	Println(any ...interface{})
+	Warnf(format string, args ...interface{})
+	Warnln(any ...interface{})
+	Errorf(format string, args ...interface{})
+	Errorln(any ...interface{})
 	Close() error
 }
 
@@ -28,6 +32,22 @@ func InitLogger(conf *Configuration) (*Logger, error) {
 	// remove timestamp
 	l.Logger.SetFlags(0)
 	return l, nil
+}
+
+func (l *Logger) Warnf(format string, args ...interface{}) {
+	l.Printf("WARN : "+format, args...)
+}
+
+func (l *Logger) Warnln(any ...interface{}) {
+	l.Println(append([]interface{}{"WARN :"}, any...)...)
+}
+
+func (l *Logger) Errorf(format string, args ...interface{}) {
+	l.Printf("ERROR: "+format, args...)
+}
+
+func (l *Logger) Errorln(any ...interface{}) {
+	l.Println(append([]interface{}{"ERROR:"}, any...)...)
 }
 
 func (l *Logger) Close() error {

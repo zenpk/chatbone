@@ -1,58 +1,45 @@
 package dal
 
-import (
-	"github.com/zenpk/chatbone/util"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-)
-
 type Model struct {
-	Deleted      bool
-	Name         string
-	Provider     string  // e.g. openai
-	InRate       float64 // dollar per token
-	OutRate      float64
-	SupportImage bool
+	Name         string  `json:"name"`
+	Encoding     string  `json:"encoding"`
+	ProviderId   int     `json:"providerId"`
+	InRate       float64 `json:"inRate"`
+	OutRate      float64 `json:"outRate"`
+	SupportImage bool    `json:"supportImage"`
 
-	conf           *util.Configuration
-	logger         util.ILogger
-	client         *mongo.Client
-	collectionName string
+	hardcoded []*Model
 }
 
-func initModel(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*Model, error) {
+func initModel() (*Model, error) {
 	m := new(Model)
-	m.conf = conf
-	m.logger = logger
-	m.client = client
-	m.collectionName = "message"
+	m.hardcoded = append(m.hardcoded, &Model{
+		Name:         "gpt-4-turbo",
+		Encoding:     "cl100k_base",
+		ProviderId:   ProviderOpenAi,
+		InRate:       0.00001,
+		OutRate:      0.00003,
+		SupportImage: false,
+	}, &Model{
+		Name:         "gpt-3.5-turbo",
+		Encoding:     "cl100k_base",
+		ProviderId:   ProviderOpenAi,
+		InRate:       0.0000005,
+		OutRate:      0.0000015,
+		SupportImage: false,
+	})
 	return m, nil
 }
 
-func (m *Model) SelectByProviderAndName(provider, name string) (*Model, error) {
-	collection := m.client.Database(m.conf.MongoDbName).Collection(m.collectionName)
-	filter := bson.M{"Deleted": false, "Provider": provider, "Name": name}
-	result := new(Model)
-	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
-	defer cancel()
-	if err := collection.FindOne(ctx, filter).Decode(result); err != nil {
-		return nil, err
-	}
-	return result, nil
+func (m *Model) SelectAll() ([]*Model, error) {
+	return m.hardcoded, nil
 }
 
-func (m *Model) SelectAll() ([]*Model, error) {
-	collection := m.client.Database(m.conf.MongoDbName).Collection(m.collectionName)
-	filter := bson.M{"Deleted": false}
-	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
-	defer cancel()
-	cursor, err := collection.Find(ctx, filter)
-	if err != nil {
-		return nil, err
+func (m *Model) SelectByProviderAndName(provider int, name string) (*Model, error) {
+	for _, v := range m.hardcoded {
+		if v.ProviderId == provider && v.Name == name {
+			return v, nil
+		}
 	}
-	result := make([]*Model, 0)
-	if err := cursor.All(ctx, &result); err != nil {
-		return nil, err
-	}
-	return result, nil
+	return nil, nil
 }

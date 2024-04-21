@@ -1,27 +1,31 @@
 package dal
 
 import (
+	"errors"
+
 	"github.com/zenpk/chatbone/util"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type Message struct {
-	Deleted   bool
-	Id        string // UserId + Timestamp
-	UserId    string // uuid
-	Timestamp int64
-	Messages  string
-	Model     string
-	Provider  string // e.g. openai
-	Persona   string
-	Shared    bool
-	Last      bool // if is the automatically saved last message
+	Deleted    bool
+	SessionId  string
+	UserId     string // uuid
+	Timestamp  int64
+	Messages   string
+	Model      string
+	ProviderId int // e.g. openai -> 1
+	Persona    string
+	Shared     bool
+	Saved      bool // if false, it means the message is automatically saved (last)
 
 	conf           *util.Configuration
 	logger         util.ILogger
 	client         *mongo.Client
 	collectionName string
+	err            error
 }
 
 func initMessage(conf *util.Configuration, client *mongo.Client, logger util.ILogger) (*Message, error) {
@@ -30,31 +34,39 @@ func initMessage(conf *util.Configuration, client *mongo.Client, logger util.ILo
 	m.logger = logger
 	m.client = client
 	m.collectionName = "message"
+	m.err = errors.New("at Message table")
 	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
 	defer cancel()
 	collection := m.client.Database(m.conf.MongoDbName).Collection(m.collectionName)
 	mod := mongo.IndexModel{
-		Keys: bson.M{"UserId": 1},
+		Keys: bson.M{"UserId": "hashed"},
 	}
 	_, err := collection.Indexes().CreateOne(ctx, mod)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, m.err)
 	}
 	mod = mongo.IndexModel{
-		Keys: bson.M{"Id": 1},
+		Keys: bson.M{"Timestamp": -1},
 	}
 	_, err = collection.Indexes().CreateOne(ctx, mod)
-	return m, err
+	if err != nil {
+		return nil, errors.Join(err, m.err)
+	}
+	mod = mongo.IndexModel{
+		Keys: bson.M{"SessionId": "hashed"},
+	}
+	_, err = collection.Indexes().CreateOne(ctx, mod)
+	return m, errors.Join(err, m.err)
 }
 
-func (m *Message) SelectById(id string) (*Message, error) {
+func (m *Message) SelectBySessionId(id string) (*Message, error) {
 	collection := m.client.Database(m.conf.MongoDbName).Collection(m.collectionName)
-	filter := bson.M{"Deleted": false, "Id": id}
+	filter := bson.M{"Deleted": false, "SessionId": id}
 	result := new(Message)
 	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
 	defer cancel()
 	if err := collection.FindOne(ctx, filter).Decode(result); err != nil {
-		return nil, err
+		return nil, errors.Join(err, m.err)
 	}
 	return result, nil
 }
@@ -64,25 +76,26 @@ func (m *Message) SelectByUserId(userId string) ([]*Message, error) {
 	filter := bson.M{"Deleted": false, "UserId": userId}
 	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
 	defer cancel()
-	cursor, err := collection.Find(ctx, filter)
+	opts := options.Find().SetSort(bson.M{"Timestamp": -1})
+	cursor, err := collection.Find(ctx, filter, opts)
 	if err != nil {
-		return nil, err
+		return nil, errors.Join(err, m.err)
 	}
 	result := make([]*Message, 0)
 	if err := cursor.All(ctx, &result); err != nil {
-		return nil, err
+		return nil, errors.Join(err, m.err)
 	}
 	return result, nil
 }
 
 func (m *Message) SelectLastByUserId(userId string) (*Message, error) {
 	collection := m.client.Database(m.conf.MongoDbName).Collection(m.collectionName)
-	filter := bson.M{"Deleted": false, "UserId": userId, "Last": true}
+	filter := bson.M{"Deleted": false, "UserId": userId, "Saved": false}
 	result := new(Message)
 	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
 	defer cancel()
 	if err := collection.FindOne(ctx, filter).Decode(result); err != nil {
-		return nil, err
+		return nil, errors.Join(err, m.err)
 	}
 	return result, nil
 }
@@ -92,14 +105,14 @@ func (m *Message) Insert(message *Message) error {
 	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
 	defer cancel()
 	_, err := collection.InsertOne(ctx, message)
-	return err
+	return errors.Join(err, m.err)
 }
 
-func (m *Message) ReplaceById(message *Message) error {
+func (m *Message) ReplaceBySessionId(message *Message) error {
 	collection := m.client.Database(m.conf.MongoDbName).Collection(m.collectionName)
-	filter := bson.M{"Deleted": false, "Id": message.Id}
+	filter := bson.M{"Deleted": false, "SessionId": message.SessionId}
 	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
 	defer cancel()
 	_, err := collection.ReplaceOne(ctx, filter, message)
-	return err
+	return errors.Join(err, m.err)
 }

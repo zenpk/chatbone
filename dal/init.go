@@ -32,7 +32,8 @@ func Init(conf *util.Configuration, logger util.ILogger) (*Database, error) {
 	if err != nil {
 		return nil, err
 	}
-	model, err := initModel(conf, client, logger)
+	// makes life easier to just hardcode the models
+	model, err := initModel()
 	if err != nil {
 		return nil, err
 	}
