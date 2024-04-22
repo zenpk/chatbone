@@ -10,16 +10,14 @@ import (
 )
 
 type Message struct {
-	Deleted    bool
-	SessionId  string
-	UserId     string // uuid
-	Timestamp  int64
-	Messages   string
-	Model      string
-	ProviderId int // e.g. openai -> 1
-	Persona    string
-	Shared     bool
-	Saved      bool // if false, it means the message is automatically saved (last)
+	Deleted   bool
+	SessionId string
+	UserId    string // uuid
+	Timestamp int64
+	Messages  string // json string of messages, might include persona (role: system)
+	ModelId   int
+	Shared    bool
+	Saved     bool // if false, it means the message is automatically saved (last)
 
 	conf           *util.Configuration
 	logger         util.ILogger
@@ -104,6 +102,9 @@ func (m *Message) SelectLastByUserId(userId string) (*Message, error) {
 }
 
 func (m *Message) Insert(message *Message) error {
+	if err := m.checkInput(message); err != nil {
+		return err
+	}
 	collection := m.client.Database(m.conf.MongoDbName).Collection(m.collectionName)
 	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
 	defer cancel()
@@ -112,10 +113,21 @@ func (m *Message) Insert(message *Message) error {
 }
 
 func (m *Message) ReplaceBySessionId(message *Message) error {
+	if err := m.checkInput(message); err != nil {
+		return err
+	}
 	collection := m.client.Database(m.conf.MongoDbName).Collection(m.collectionName)
 	filter := bson.M{"Deleted": false, "SessionId": message.SessionId}
 	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
 	defer cancel()
 	_, err := collection.ReplaceOne(ctx, filter, message)
 	return errors.Join(err, m.err)
+}
+
+func (m *Message) checkInput(message *Message) error {
+	if message == nil || message.UserId == "" || message.SessionId == "" || message.Messages == "" ||
+		message.Timestamp <= 0 || message.ModelId <= 0 {
+		return errors.Join(errors.New("insert invalid input"), m.err)
+	}
+	return nil
 }

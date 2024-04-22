@@ -1,6 +1,7 @@
 package service
 
 import (
+	"github.com/zenpk/chatbone/cal"
 	"github.com/zenpk/chatbone/dal"
 	"github.com/zenpk/chatbone/util"
 )
@@ -11,7 +12,7 @@ type Message struct {
 	db     *dal.Database
 }
 
-func NewMessage(conf *util.Configuration, logger util.ILogger, db *dal.Database) (*Message, error) {
+func NewMessage(conf *util.Configuration, logger util.ILogger, db *dal.Database, cache *cal.Cache) (*Message, error) {
 	m := new(Message)
 	m.conf = conf
 	m.logger = logger

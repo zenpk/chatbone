@@ -120,6 +120,8 @@ func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrUnauthorized, Msg: "JWT token expired"})
 			return nil
 		}
+		// set user id to context
+		c.Set("uuid", claims.Uuid)
 		return next(c)
 	}
 }

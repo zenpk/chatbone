@@ -11,6 +11,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/zenpk/chatbone/cal"
 	"github.com/zenpk/chatbone/dal"
 	"github.com/zenpk/chatbone/handler"
 	"github.com/zenpk/chatbone/service"
@@ -50,12 +51,16 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-
-	messageService, err := service.NewMessage(conf, logger, db)
+	cache, err := cal.New(conf, logger, db)
 	if err != nil {
 		panic(err)
 	}
-	openAiService, err := service.NewOpenAi(conf, logger, db)
+
+	messageService, err := service.NewMessage(conf, logger, db, cache)
+	if err != nil {
+		panic(err)
+	}
+	openAiService, err := service.NewOpenAi(conf, logger, db, cache)
 	if err != nil {
 		panic(err)
 	}

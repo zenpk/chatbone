@@ -5,8 +5,12 @@ type OpenAiMessage struct {
 	Content string `json:"content"`
 }
 
-type OpenAiReq struct {
-	Model    string          `json:"model"`
+type OpenAiReqFromClient struct {
+	ModelId  int             `json:"modelId"`
 	Messages []OpenAiMessage `json:"messages"`
-	Stream   bool            `json:"stream"`
+}
+
+type OpenAiReqToOpenAi struct {
+	OpenAiReqFromClient
+	Stream bool `json:"stream"`
 }

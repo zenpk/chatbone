@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/pkoukk/tiktoken-go"
+	"github.com/zenpk/chatbone/cal"
 	"github.com/zenpk/chatbone/dal"
 	"github.com/zenpk/chatbone/dto"
 	"github.com/zenpk/chatbone/util"
@@ -17,27 +18,35 @@ import (
 type OpenAi struct {
 	conf   *util.Configuration
 	logger util.ILogger
-	db     *dal.Database
 	err    error
+
+	model   *dal.Model
+	history *dal.History
+	user    dal.IUser
 }
 
-func NewOpenAi(conf *util.Configuration, logger util.ILogger, db *dal.Database) (*OpenAi, error) {
+func NewOpenAi(conf *util.Configuration, logger util.ILogger, db *dal.Database, cache *cal.Cache) (*OpenAi, error) {
 	o := new(OpenAi)
 	o.conf = conf
 	o.logger = logger
-	o.db = db
+	o.model = db.Model
+	o.history = db.History
+	o.user = cache.User
 	o.err = errors.New("at OpenAi service")
 	return o, nil
 }
 
-func (o *OpenAi) Chat(sessionId string, user *dal.User, model *dal.Model, reqBody *dto.OpenAiReq, responseChan chan<- string) error {
+func (o *OpenAi) Chat(sessionId string, user *dal.User, model *dal.Model, reqBody *dto.OpenAiReqFromClient, responseChan chan<- string) error {
 	if sessionId == "" || user == nil || model == nil || reqBody == nil || responseChan == nil {
 		return errors.Join(errors.New("chat invalid input"), o.err)
 	}
 	if err := o.checkRequestBody(reqBody); err != nil {
 		return errors.Join(err, o.err)
 	}
-	reqByte, err := json.Marshal(reqBody)
+	reqByte, err := json.Marshal(dto.OpenAiReqToOpenAi{
+		OpenAiReqFromClient: *reqBody,
+		Stream:              true, // always stream
+	})
 	if err != nil {
 		return errors.Join(err, o.err)
 	}
@@ -110,12 +119,11 @@ func (o *OpenAi) Chat(sessionId string, user *dal.User, model *dal.Model, reqBod
 	if err != nil {
 		return errors.Join(err, o.err)
 	}
-	if err := o.db.History.Insert(&dal.History{
+	if err := o.history.Insert(&dal.History{
 		SessionId:     sessionId,
 		Timestamp:     util.GetTimestamp(),
 		UserId:        user.Id,
-		Model:         model.Name,
-		ProviderId:    model.ProviderId,
+		ModelId:       reqBody.ModelId,
 		InTokenCount:  inToken,
 		OutTokenCount: outToken,
 	}); err != nil {
@@ -148,20 +156,13 @@ func (o *OpenAi) countTokensFromMessages(messages []dto.OpenAiMessage, model *da
 	return numTokens, nil
 }
 
-func (o *OpenAi) checkRequestBody(req *dto.OpenAiReq) error {
+func (o *OpenAi) checkRequestBody(req *dto.OpenAiReqFromClient) error {
 	// check model
-	models, err := o.db.Model.SelectAll()
+	model, err := o.model.SelectById(req.ModelId)
 	if err != nil {
 		return err
 	}
-	modelFound := false
-	for _, model := range models {
-		if req.Model == model.Name && model.ProviderId == dal.ProviderOpenAi {
-			modelFound = true
-			break
-		}
-	}
-	if !modelFound {
+	if model == nil {
 		return errors.New("unsupported OpenAI model")
 	}
 	// check messages
@@ -178,7 +179,5 @@ func (o *OpenAi) checkRequestBody(req *dto.OpenAiReq) error {
 			return errors.New("message content too long")
 		}
 	}
-	// always use stream
-	req.Stream = true
 	return nil
 }

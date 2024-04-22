@@ -1,5 +1,10 @@
 package dal
 
 const (
-	ProviderOpenAi = 1
+	ModelIdOpenAiGpt4  = 1
+	ModelIdOpenAiGpt35 = 2
+)
+
+const (
+	BalanceMultipleFactor = 1000000
 )

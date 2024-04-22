@@ -1,0 +1,7 @@
+@url = http://127.0.0.1:8005
+@token = 
+
+###
+POST {{url}}/chat
+Content-Type: application/json
+Authorization: Bearer {{token}}
