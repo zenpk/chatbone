@@ -35,10 +35,13 @@ func newHistory(conf *util.Configuration, client *mongo.Client, logger util.ILog
 	defer cancel()
 	collection := h.client.Database(h.conf.MongoDbName).Collection(h.collectionName)
 	mod := mongo.IndexModel{
-		Keys: bson.M{"Timestamp": 1, "UserId": 1},
+		Keys: bson.D{{"Timestamp", 1}, {"UserId", 1}},
 	}
 	_, err := collection.Indexes().CreateOne(ctx, mod)
-	return h, errors.Join(err, h.err)
+	if err != nil {
+		return nil, errors.Join(err, h.err)
+	}
+	return h, nil
 }
 
 func (h *History) SelectBySessionId(sessionId string) ([]*History, error) {

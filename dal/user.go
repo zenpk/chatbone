@@ -31,10 +31,13 @@ func newUser(conf *util.Configuration, client *mongo.Client, logger util.ILogger
 	defer cancel()
 	collection := u.client.Database(u.conf.MongoDbName).Collection(u.collectionName)
 	mod := mongo.IndexModel{
-		Keys: bson.M{"Id": 1},
+		Keys: bson.D{{"Id", 1}},
 	}
 	_, err := collection.Indexes().CreateOne(ctx, mod)
-	return u, errors.Join(err, u.err)
+	if err != nil {
+		return nil, errors.Join(err, u.err)
+	}
+	return u, nil
 }
 
 func (u *User) SelectByIdInsertIfNotExists(id string) (*User, error) {

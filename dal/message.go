@@ -46,7 +46,7 @@ func newMessage(conf *util.Configuration, client *mongo.Client, logger util.ILog
 		return nil, errors.Join(err, m.err)
 	}
 	mod = mongo.IndexModel{
-		Keys: bson.M{"Timestamp": -1},
+		Keys: bson.D{{"Timestamp", -1}},
 	}
 	_, err = collection.Indexes().CreateOne(ctx, mod)
 	if err != nil {
@@ -56,7 +56,10 @@ func newMessage(conf *util.Configuration, client *mongo.Client, logger util.ILog
 		Keys: bson.M{"SessionId": "hashed"},
 	}
 	_, err = collection.Indexes().CreateOne(ctx, mod)
-	return m, errors.Join(err, m.err)
+	if err != nil {
+		return nil, errors.Join(err, m.err)
+	}
+	return m, nil
 }
 
 func (m *Message) SelectBySessionId(id string) (*Message, error) {
@@ -76,7 +79,7 @@ func (m *Message) SelectByUserId(userId string) ([]*Message, error) {
 	filter := bson.M{"Deleted": false, "UserId": userId}
 	ctx, cancel := util.GetTimeoutContext(m.conf.TimeoutSecond)
 	defer cancel()
-	opts := options.Find().SetSort(bson.M{"Timestamp": -1})
+	opts := options.Find().SetSort(bson.D{{"Timestamp", -1}})
 	cursor, err := collection.Find(ctx, filter, opts)
 	if err != nil {
 		return nil, errors.Join(err, m.err)

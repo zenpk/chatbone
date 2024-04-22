@@ -3,13 +3,13 @@ package handler
 import (
 	"context"
 	"crypto/rsa"
+	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
 	"math/big"
 	"net/http"
-	"strconv"
 	"strings"
 	"time"
 
@@ -49,18 +49,17 @@ func New(conf *util.Configuration, messageService *service.Message, openAiServic
 	if err := json.NewDecoder(resp.Body).Decode(&publicKey); err != nil {
 		return nil, errors.Join(err, h.err)
 	}
-	rsaN := new(big.Int)
-	rsaN, ok := rsaN.SetString(publicKey.N, 10)
-	if !ok {
-		return nil, errors.Join(errors.New("invalid RSA public key field: N"), h.err)
+	nBytes, err := base64.RawURLEncoding.DecodeString(publicKey.N)
+	if err != nil {
+		return nil, errors.Join(fmt.Errorf("invalid RSA public key field: N: %w", err), h.err)
 	}
-	rsaE, err := strconv.ParseInt(publicKey.E, 10, 64)
+	eBytes, err := base64.RawURLEncoding.DecodeString(publicKey.E)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("invalid RSA public key field: E: %w", err), h.err)
 	}
 	h.rsaPublicKey = rsa.PublicKey{
-		N: rsaN,
-		E: int(rsaE),
+		N: big.NewInt(0).SetBytes(nBytes),
+		E: int(big.NewInt(0).SetBytes(eBytes).Int64()),
 	}
 
 	h.e = echo.New()

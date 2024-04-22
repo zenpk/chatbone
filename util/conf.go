@@ -6,18 +6,18 @@ import (
 )
 
 type Configuration struct {
-	TimeoutSecond    int    `json:"timeoutSecond"`
-	HttpAddress      string `json:"httpAddress"`
-	LogFilePath      string `json:"logFilePath"`
-	OAuthRefreshPath string `json:"oAuthRefreshPath"`
-	OAuthJwkPath     string `json:"oAuthJwkPath"`
-	JwtIssuer        string `json:"jwtIssuer"`
-	JwtClientId      string `json:"jwtClientId"`
-	MongoDbUri       string `json:"mongoDbUri"`
-	MongoDbName      string `json:"mongoDbName"`
-	OpenAiOrgId      string `json:"openAiOrgId"`
-	OpenAiApiKey     string `json:"openAiApiKey"`
-	ReqLengthLimit   int    `json:"reqLengthLimit"`
+	TimeoutSecond      int    `json:"timeoutSecond"`
+	HttpAddress        string `json:"httpAddress"`
+	LogFilePath        string `json:"logFilePath"`
+	OAuthRefreshPath   string `json:"oAuthRefreshPath"`
+	OAuthJwkPath       string `json:"oAuthJwkPath"`
+	JwtIssuer          string `json:"jwtIssuer"`
+	JwtClientId        string `json:"jwtClientId"`
+	MongoDbUri         string `json:"mongoDbUri"`
+	MongoDbName        string `json:"mongoDbName"`
+	OpenAiOrgId        string `json:"openAiOrgId"`
+	OpenAiApiKey       string `json:"openAiApiKey"`
+	MessageLengthLimit int    `json:"messageLengthLimit"`
 }
 
 func NewConf(mode string) (*Configuration, error) {

@@ -174,7 +174,7 @@ func (o *OpenAi) checkRequestBody(req *dto.OpenAiReq) error {
 			return errors.New("message content should not be empty")
 		}
 		messageLen += len(message.Content)
-		if messageLen > o.conf.ReqLengthLimit {
+		if messageLen > o.conf.MessageLengthLimit {
 			return errors.New("message content too long")
 		}
 	}

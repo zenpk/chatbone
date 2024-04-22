@@ -17,7 +17,7 @@ import (
 	"github.com/zenpk/chatbone/util"
 )
 
-var mode = flag.String("mode", "dev", "define program mode")
+var mode = flag.String("mode", "local", "define program mode")
 
 func main() {
 	flag.Parse()
