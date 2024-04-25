@@ -60,6 +60,9 @@ func (u *User) ReduceBalance(id string, amount int64) error {
 	if user.Balance < amount {
 		return errors.Join(errors.New("balance is not enough"), u.err)
 	}
+	if err:= u.User.ReduceBalance(id, amount); err!=nil{
+		return err
+	}
 	user.Balance -= amount
-	return u.User.ReduceBalance(id, amount)
+	return nil
 }
