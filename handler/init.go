@@ -97,18 +97,12 @@ func New(conf *util.Configuration, messageService *service.Message, openAiServic
 
 func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
-		authorization := c.Request().Header.Get("Authorization")
-		if authorization == "" {
-			c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrUnauthorized, Msg: "missing Authorization header"})
+		accessTokenCookie, err := c.Cookie(CookieAccessToken)
+		if err != nil {
+			c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrUnauthorized, Msg: fmt.Sprintf("get cookie failed: %w", err)})
 			return nil
 		}
-		split := strings.Split(authorization, " ")
-		if len(split) != 2 {
-			c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrUnauthorized, Msg: "invalid Authorization header"})
-			return nil
-		}
-		token := split[1]
-		claims, err := util.VerifyAndParse(token, &h.rsaPublicKey)
+		claims, err := util.VerifyAndParse(accessTokenCookie.Value, &h.rsaPublicKey)
 		if err != nil {
 			return errors.Join(err, h.err)
 		}
@@ -136,4 +130,18 @@ func (h *Handler) Shutdown(ctx context.Context) error {
 
 func (h *Handler) ListenAndServe() error {
 	return h.e.Start(h.conf.HttpAddress)
+}
+
+// getTokenFromAuthorizationHeader not used
+func (h *Handler) getTokenFromAuthorizationHeader(c echo.Context) (string, error) {
+	authorization := c.Request().Header.Get("Authorization")
+	if authorization == "" {
+		return "", errors.New("missing Authorization header")
+	}
+	split := strings.Split(authorization, " ")
+	if len(split) != 2 {
+		return "", errors.New("invalid Authorization header")
+	}
+	token := split[1]
+	return token, nil
 }

@@ -6,8 +6,9 @@ type OpenAiMessage struct {
 }
 
 type OpenAiReqFromClient struct {
-	ModelId  int             `json:"modelId"`
-	Messages []OpenAiMessage `json:"messages"`
+	ModelId   int             `json:"modelId"`
+	SessionId string          `json:"sessionId"`
+	Messages  []OpenAiMessage `json:"messages"`
 }
 
 type OpenAiReqToOpenAi struct {

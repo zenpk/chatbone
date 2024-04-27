@@ -72,14 +72,14 @@ func (u *User) SelectByIdInsertIfNotExists(uuid string) (*User, error) {
 	return result, nil
 }
 
-func (u *User) ReduceBalance(id string, amount int64) error {
+func (u *User) ReduceBalance(id string, amount int64) (*User, error) {
 	if amount <= 0 {
-		return errors.Join(errors.New("balance reduce amount must be positive"), u.err)
+		return nil, errors.Join(errors.New("balance reduce amount must be positive"), u.err)
 	}
 	// ensure the user exists
 	user, err := u.SelectByIdInsertIfNotExists(id)
 	if err != nil {
-		return fmt.Errorf("reduce balance: select user failed: %w", err)
+		return nil, fmt.Errorf("reduce balance: select user failed: %w", err)
 	}
 	collection := u.client.Database(u.conf.MongoDbName).Collection(u.collectionName)
 	filter := bson.M{"Id": id}
@@ -90,9 +90,9 @@ func (u *User) ReduceBalance(id string, amount int64) error {
 	u.mutex.Lock()
 	defer u.mutex.Unlock()
 	if _, err := collection.UpdateOne(ctx, filter, update); err != nil {
-		return errors.Join(err, u.err)
+		return nil, errors.Join(err, u.err)
 	}
-	return nil
+	return user, nil
 }
 
 func (u *User) SelectAll() ([]*User, error) {

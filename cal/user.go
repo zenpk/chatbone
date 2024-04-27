@@ -52,17 +52,30 @@ func (u *User) SelectByIdInsertIfNotExists(uuid string) (*dal.User, error) {
 }
 
 func (u *User) ReduceBalance(id string, amount int64) error {
-	// TODO
-	user, err := u.SelectByIdInsertIfNotExists(id)
+	user, err := u.selectByIdUpdateCache(id)
 	if err != nil {
-		return err
+		return errors.Join(err, u.err)
 	}
 	if user.Balance < amount {
 		return errors.Join(errors.New("balance is not enough"), u.err)
 	}
-	if err:= u.User.ReduceBalance(id, amount); err!=nil{
+	newUser, err := u.User.ReduceBalance(id, amount)
+	if err != nil {
 		return err
 	}
-	user.Balance -= amount
+	// update balance using the newUser pointer to avoid race condition
+	user.Balance = newUser.Balance
 	return nil
+}
+
+func (u *User) selectByIdUpdateCache(id string) (*dal.User, error) {
+	user, ok := u.cached[id]
+	if !ok {
+		user, err := u.SelectByIdInsertIfNotExists(id)
+		if err != nil {
+			return nil, err
+		}
+		u.cached[id] = user
+	}
+	return user, nil
 }

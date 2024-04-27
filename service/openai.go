@@ -36,11 +36,19 @@ func NewOpenAi(conf *util.Configuration, logger util.ILogger, db *dal.Database, 
 	return o, nil
 }
 
-func (o *OpenAi) Chat(sessionId string, user *dal.User, model *dal.Model, reqBody *dto.OpenAiReqFromClient, responseChan chan<- string) error {
-	if sessionId == "" || user == nil || model == nil || reqBody == nil || responseChan == nil {
+func (o *OpenAi) Chat(uuid string, reqBody *dto.OpenAiReqFromClient, responseChan chan<- string) error {
+	if uuid == "" || reqBody == nil || responseChan == nil {
 		return errors.Join(errors.New("chat invalid input"), o.err)
 	}
-	if err := o.checkRequestBody(reqBody); err != nil {
+	user, err := o.user.SelectByIdInsertIfNotExists(uuid)
+	if err != nil {
+		return errors.Join(err, o.err)
+	}
+	if user.Balance <= 0 {
+		return errors.Join(errors.New("user doesn't have enough balance"), o.err)
+	}
+	model, err := o.checkChatRequestBody(reqBody)
+	if err != nil {
 		return errors.Join(err, o.err)
 	}
 	reqByte, err := json.Marshal(dto.OpenAiReqToOpenAi{
@@ -120,7 +128,7 @@ func (o *OpenAi) Chat(sessionId string, user *dal.User, model *dal.Model, reqBod
 		return errors.Join(err, o.err)
 	}
 	if err := o.history.Insert(&dal.History{
-		SessionId:     sessionId,
+		SessionId:     reqBody.SessionId,
 		Timestamp:     util.GetTimestamp(),
 		UserId:        user.Id,
 		ModelId:       reqBody.ModelId,
@@ -156,28 +164,28 @@ func (o *OpenAi) countTokensFromMessages(messages []dto.OpenAiMessage, model *da
 	return numTokens, nil
 }
 
-func (o *OpenAi) checkRequestBody(req *dto.OpenAiReqFromClient) error {
+func (o *OpenAi) checkChatRequestBody(req *dto.OpenAiReqFromClient) (*dal.Model, error) {
 	// check model
 	model, err := o.model.SelectById(req.ModelId)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	if model == nil {
-		return errors.New("unsupported OpenAI model")
+		return nil, errors.New("unsupported OpenAI model")
 	}
 	// check messages
 	messageLen := 0
 	for _, message := range req.Messages {
 		if message.Role != "user" && message.Role != "assistant" && message.Role != "system" {
-			return errors.New("unsupported message role")
+			return nil, errors.New("unsupported message role")
 		}
 		if message.Content == "" {
-			return errors.New("message content should not be empty")
+			return nil, errors.New("message content should not be empty")
 		}
 		messageLen += len(message.Content)
 		if messageLen > o.conf.MessageLengthLimit {
-			return errors.New("message content too long")
+			return nil, errors.New("message content too long")
 		}
 	}
-	return nil
+	return model, nil
 }
