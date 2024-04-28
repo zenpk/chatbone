@@ -36,6 +36,8 @@ func New(conf *util.Configuration, messageService *service.Message, openAiServic
 	h.conf = conf
 	h.errCodeKey = "errCode"
 	h.err = errors.New("at Handler")
+	h.messageService = messageService
+	h.openAiService = openAiService
 	// get JWK from the OAuth 2.0 endpoint
 	client := http.Client{
 		Timeout: time.Duration(h.conf.TimeoutSecond) * time.Second,

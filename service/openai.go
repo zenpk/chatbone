@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"time"
@@ -52,8 +53,9 @@ func (o *OpenAi) Chat(uuid string, reqBody *dto.OpenAiReqFromClient, responseCha
 		return errors.Join(err, o.err)
 	}
 	reqByte, err := json.Marshal(dto.OpenAiReqToOpenAi{
-		OpenAiReqFromClient: *reqBody,
-		Stream:              true, // always stream
+		Model:    model.Name,
+		Messages: reqBody.Messages,
+		Stream:   true, // always stream
 	})
 	if err != nil {
 		return errors.Join(err, o.err)
@@ -74,47 +76,97 @@ func (o *OpenAi) Chat(uuid string, reqBody *dto.OpenAiReqFromClient, responseCha
 	defer resp.Body.Close()
 
 	responseMessages := make([]dto.OpenAiMessage, 0)
-	const bufferSize = 4096
-	temp := make([]byte, bufferSize)
+	const bufferSize = 8192
+	bodyRead := make([]byte, bufferSize)
+	// sometimes OpenAI will return an incomplete JSON, we save it to last
+	last := make([]byte, bufferSize/4)
 	lastLen := 0
 
 	for {
 		var buf bytes.Buffer
-		n, err := resp.Body.Read(temp[lastLen:])
+		n, err := resp.Body.Read(bodyRead)
 		if err != nil {
 			if err != io.EOF {
-				return errors.Join(err, o.err)
+				return errors.Join(fmt.Errorf("read body to buffer failed: %w", err), o.err)
 			}
 			break
 		}
+
 		if n > 0 {
+			// start from the prefix "data: " to remove the malformed JSON
+			startPos := bytes.Index(bodyRead, []byte("data: "))
+			if startPos == -1 {
+				continue
+			}
+			dataToRead := bodyRead[startPos+6 : n]
+			// check ending
+			if find := bytes.Index(dataToRead, []byte(dto.MessageEnding)); find == 0 {
+				responseChan <- dto.MessageEnding
+				break
+			}
+			// if there is data from the last read, append the current data to it
+			if lastLen > 0 {
+				dataToRead = append(last[:lastLen], dataToRead...)
+				lastLen = 0
+			}
+
 			// append read bytes to the buffer
-			buf.Write(temp[:lastLen+n])
-			lastLen = 0
-			var message dto.OpenAiMessage
+			buf.Write(dataToRead)
 
 			for {
+				if buf.Len() <= 0 {
+					break
+				}
+				// check ending
+				if find := bytes.Index(buf.Bytes(), []byte(dto.MessageEnding)); find == 0 {
+					responseChan <- dto.MessageEnding
+					break
+				}
 				// try to decode the object
+				var message dto.OpenAiResp
 				dec := json.NewDecoder(&buf)
-				if err := dec.Decode(&message); err != nil {
-					if err == io.EOF {
-						// not enough data to decode, save the data to temp and break
-						lastLen = buf.Len()
-						if _, err := buf.Read(temp[:lastLen]); err != nil {
-							return errors.Join(err, o.err)
-						}
-						break
+				if err := dec.Decode(&message); err != nil && err != io.EOF {
+					o.logger.Warnf("decode message failed: %s, saving the buffer to last\n", err)
+					// malformed json, this often means only a part of JSON was received
+					// and can be concatenated with the next read
+					// save the data to last and break
+					decoderLen, err := dec.Buffered().Read(last)
+					if err != nil && err != io.EOF {
+						return errors.Join(fmt.Errorf("read remainder from decoder to last failed: %w", err), o.err)
 					}
-					// handle other errors (malformed JSON, etc.)
-					return errors.Join(err, o.err)
+					bufferLen, err := buf.Read(last[decoderLen:])
+					if err != nil && err != io.EOF {
+						return errors.Join(fmt.Errorf("read remainder from buffer to last failed: %w", err), o.err)
+					}
+					lastLen = decoderLen + bufferLen
+					break
 				}
 				// save the decoded object and send the message to the channel
-				responseMessages = append(responseMessages, message)
-				responseChan <- message.Content
-				// remove the decoded object from the buffer
-				next := make([]byte, bufferSize)
-				_, _ = dec.Buffered().Read(next)
-				buf = *bytes.NewBuffer(next)
+				if len(message.Choices) > 0 && message.Choices[0] != nil &&
+					message.Choices[0].Delta != nil && message.Choices[0].Delta.Content != "" {
+					responseMessages = append(responseMessages, *message.Choices[0].Delta)
+					responseChan <- message.Choices[0].Delta.Content
+				}
+				// read the remainder to next buffer
+				next := make([]byte, bufferSize/4)
+				decoderLen, err := dec.Buffered().Read(next)
+				if err != nil && err != io.EOF {
+					return errors.Join(fmt.Errorf("read remainder from decoder to next failed: %w", err), o.err)
+				}
+				bufferLen, err := buf.Read(next[decoderLen:])
+				if err != nil && err != io.EOF {
+					return errors.Join(fmt.Errorf("read remainder from buffer to next failed: %w", err), o.err)
+				}
+				// find the prefix
+				startPos := bytes.Index(next, []byte("data: "))
+				if startPos == -1 {
+					// if there is no prefix, save the data to last and break
+					// because at this point, the next might only contain "da" rather than a complete "data: "
+					last = next
+					lastLen = decoderLen + bufferLen
+					break
+				}
+				buf = *bytes.NewBuffer(next[startPos+6 : decoderLen+bufferLen])
 			}
 		}
 	}

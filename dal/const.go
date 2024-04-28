@@ -8,3 +8,7 @@ const (
 const (
 	BalanceMultipleFactor = 1000000
 )
+
+const (
+	ProviderOpenAi = "openai"
+)

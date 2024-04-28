@@ -1,6 +1,8 @@
 package dto
 
 const (
-	ErrUnknown = 5000
+	ErrOk           = 2000
+	ErrUnknown      = 5000
+	ErrInput        = 4000
 	ErrUnauthorized = 4010
 )

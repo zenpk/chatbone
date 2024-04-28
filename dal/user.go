@@ -35,6 +35,7 @@ func newUser(conf *util.Configuration, client *mongo.Client, logger util.ILogger
 	u.client = client
 	u.collectionName = "user"
 	u.err = errors.New("at User table")
+	u.mutex = new(sync.Mutex)
 	ctx, cancel := util.GetTimeoutContext(u.conf.TimeoutSecond)
 	defer cancel()
 	collection := u.client.Database(u.conf.MongoDbName).Collection(u.collectionName)

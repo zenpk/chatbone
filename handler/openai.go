@@ -1,6 +1,9 @@
 package handler
 
 import (
+	"encoding/json"
+	"net/http"
+
 	"github.com/labstack/echo/v4"
 	"github.com/zenpk/chatbone/dto"
 )
@@ -9,6 +12,7 @@ func (h *Handler) chat(c echo.Context) error {
 	const ChanSize = 1024
 	req := new(dto.OpenAiReqFromClient)
 	if err := c.Bind(req); err != nil {
+		c.Set(h.errCodeKey, dto.ErrInput)
 		return err
 	}
 	uuid := c.Get("uuid").(string)
@@ -17,6 +21,7 @@ func (h *Handler) chat(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
 	c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
 	c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
+	enc := json.NewEncoder(c.Response())
 	go func() {
 		if err := h.openAiService.Chat(uuid, req, replyChan); err != nil {
 			errChan <- err
@@ -25,10 +30,15 @@ func (h *Handler) chat(c echo.Context) error {
 	for {
 		select {
 		case reply := <-replyChan:
-			if _, err := c.Response().Write([]byte(reply)); err != nil {
+			if err := enc.Encode(dto.CommonResp{
+				Code: dto.ErrOk,
+				Msg:  reply,
+			}); err != nil {
 				return err
 			}
+			c.Response().Flush()
 			if reply == dto.MessageEnding {
+				c.Response().WriteHeader(http.StatusOK)
 				return nil
 			}
 		case err := <-errChan:

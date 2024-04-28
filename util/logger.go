@@ -3,6 +3,7 @@ package util
 import (
 	"log"
 	"os"
+	"time"
 )
 
 type ILogger interface {
@@ -35,21 +36,32 @@ func NewLogger(conf *Configuration) (*Logger, error) {
 }
 
 func (l *Logger) Warnf(format string, args ...interface{}) {
+	l.printTime()
 	l.Printf("WARN : "+format, args...)
 }
 
 func (l *Logger) Warnln(any ...interface{}) {
-	l.Println(append([]interface{}{"WARN :"}, any...)...)
+	l.printTime()
+	l.Print(append([]interface{}{"WARN :"}, any...)...)
+	l.Print("\n")
 }
 
 func (l *Logger) Errorf(format string, args ...interface{}) {
+	l.printTime()
 	l.Printf("ERROR: "+format, args...)
 }
 
 func (l *Logger) Errorln(any ...interface{}) {
-	l.Println(append([]interface{}{"ERROR:"}, any...)...)
+	l.printTime()
+	l.Print(append([]interface{}{"ERROR:"}, any...)...)
+	l.Print("\n")
 }
 
 func (l *Logger) Close() error {
 	return l.logFile.Close()
+}
+
+func (l *Logger) printTime() {
+	const Format = "2006-01-02 15:04:05"
+	l.Printf("[%s] ", time.Now().UTC().Format(Format))
 }

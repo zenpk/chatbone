@@ -16,12 +16,14 @@ type User struct {
 	err    error
 }
 
+// newUser creates a new cal.User instance and preloads the cache
 func newUser(conf *util.Configuration, logger util.ILogger, db *dal.Database) (*User, error) {
 	u := new(User)
 	u.User = db.User
 	u.conf = conf
 	u.logger = logger
 	u.err = errors.New("at User cache")
+	u.cached = make(map[string]*dal.User)
 	cached, err := db.User.SelectAll()
 	if err != nil {
 		return nil, errors.Join(err, u.err)
