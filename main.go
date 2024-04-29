@@ -56,6 +56,14 @@ func main() {
 		panic(err)
 	}
 
+	modelService, err := service.NewModel(conf, logger, db)
+	if err != nil {
+		panic(err)
+	}
+	oAuthService, err := service.NewOAuth(conf, logger)
+	if err != nil {
+		panic(err)
+	}
 	messageService, err := service.NewMessage(conf, logger, db, cache)
 	if err != nil {
 		panic(err)
@@ -65,7 +73,7 @@ func main() {
 		panic(err)
 	}
 
-	hd, err := handler.New(conf, logger, messageService, openAiService)
+	hd, err := handler.New(conf, logger, modelService, oAuthService, messageService, openAiService)
 	if err != nil {
 		panic(err)
 	}

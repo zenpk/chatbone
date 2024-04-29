@@ -34,7 +34,7 @@ func newHistory(conf *util.Configuration, client *mongo.Client, logger util.ILog
 	defer cancel()
 	collection := h.client.Database(h.conf.MongoDbName).Collection(h.collectionName)
 	mod := mongo.IndexModel{
-		Keys: bson.D{{"Timestamp", 1}, {"UserId", 1}},
+		Keys: bson.D{{"timestamp", 1}, {"userId", 1}},
 	}
 	_, err := collection.Indexes().CreateOne(ctx, mod)
 	if err != nil {
@@ -45,7 +45,7 @@ func newHistory(conf *util.Configuration, client *mongo.Client, logger util.ILog
 
 func (h *History) SelectBySessionId(sessionId string) ([]*History, error) {
 	collection := h.client.Database(h.conf.MongoDbName).Collection(h.collectionName)
-	filter := bson.M{"SessionId": sessionId}
+	filter := bson.M{"sessionId": sessionId}
 	ctx, cancel := util.GetTimeoutContext(h.conf.TimeoutSecond)
 	defer cancel()
 	cursor, err := collection.Find(ctx, filter)
@@ -61,7 +61,7 @@ func (h *History) SelectBySessionId(sessionId string) ([]*History, error) {
 
 func (h *History) SelectByUserIdAfter(userId string, timestamp int64) ([]*History, error) {
 	collection := h.client.Database(h.conf.MongoDbName).Collection(h.collectionName)
-	filter := bson.M{"UserId": userId, "Timestamp": bson.M{"$gt": timestamp}}
+	filter := bson.M{"userId": userId, "timestamp": bson.M{"$gt": timestamp}}
 	ctx, cancel := util.GetTimeoutContext(h.conf.TimeoutSecond)
 	defer cancel()
 	cursor, err := collection.Find(ctx, filter)

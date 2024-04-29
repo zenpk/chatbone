@@ -21,6 +21,8 @@ import (
 )
 
 type Handler struct {
+	modelService   *service.Model
+	oAuthService   *service.OAuth
 	messageService *service.Message
 	openAiService  *service.OpenAi
 
@@ -32,14 +34,20 @@ type Handler struct {
 	err          error
 }
 
-func New(conf *util.Configuration, logger util.ILogger, messageService *service.Message, openAiService *service.OpenAi) (*Handler, error) {
+func New(conf *util.Configuration, logger util.ILogger,
+	modelService *service.Model, oAuthService *service.OAuth, messageService *service.Message, openAiService *service.OpenAi,
+) (*Handler, error) {
 	h := new(Handler)
 	h.conf = conf
 	h.logger = logger
 	h.errCodeKey = "errCode"
 	h.err = errors.New("at Handler")
+
+	h.modelService = modelService
+	h.oAuthService = oAuthService
 	h.messageService = messageService
 	h.openAiService = openAiService
+
 	// get JWK from the OAuth 2.0 endpoint
 	client := http.Client{
 		Timeout: time.Duration(h.conf.TimeoutSecond) * time.Second,
@@ -94,7 +102,6 @@ func New(conf *util.Configuration, logger util.ILogger, messageService *service.
 			return v.Error
 		},
 	}))
-	h.e.Use(h.jwtMiddleware)
 	h.setRoutes()
 	return h, nil
 }
@@ -110,7 +117,7 @@ func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 		if err != nil {
 			return errors.Join(err, h.err)
 		}
-		if claims.Issuer != h.conf.JwtIssuer {
+		if claims.Issuer != h.conf.OAuthIssuer {
 			c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrUnauthorized, Msg: "wrong JWT issuer"})
 			return nil
 		}
@@ -125,6 +132,11 @@ func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 func (h *Handler) setRoutes() {
+	h.e.POST("/authorization", h.Authorization)
+	h.e.POST("/refresh", h.Refresh)
+
+	// auth needed
+	h.e.Use(h.jwtMiddleware)
 	h.e.POST("/chat", h.chat)
 }
 

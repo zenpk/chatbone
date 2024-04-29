@@ -37,7 +37,7 @@ func NewOpenAi(conf *util.Configuration, logger util.ILogger, db *dal.Database, 
 	return o, nil
 }
 
-func (o *OpenAi) Chat(uuid string, reqBody *dto.OpenAiReqFromClient, responseChan chan<- string) error {
+func (o *OpenAi) Chat(uuid string, model *dal.Model, reqBody *dto.OpenAiReqFromClient, responseChan chan<- string) error {
 	if uuid == "" || reqBody == nil || responseChan == nil {
 		return errors.Join(errors.New("chat invalid input"), o.err)
 	}
@@ -48,8 +48,7 @@ func (o *OpenAi) Chat(uuid string, reqBody *dto.OpenAiReqFromClient, responseCha
 	if user.Balance <= 0 {
 		return errors.Join(errors.New("user doesn't have enough balance"), o.err)
 	}
-	model, err := o.checkChatRequestBody(reqBody)
-	if err != nil {
+	if err := o.checkChatRequestBody(reqBody); err != nil {
 		return errors.Join(err, o.err)
 	}
 	reqByte, err := json.Marshal(dto.OpenAiReqToOpenAi{
@@ -218,28 +217,23 @@ func (o *OpenAi) countTokensFromMessages(messages []dto.OpenAiMessage, model *da
 	return numTokens, nil
 }
 
-func (o *OpenAi) checkChatRequestBody(req *dto.OpenAiReqFromClient) (*dal.Model, error) {
-	// check model
-	model, err := o.model.SelectById(req.ModelId)
-	if err != nil {
-		return nil, err
-	}
-	if model == nil {
-		return nil, errors.New("unsupported OpenAI model")
+func (o *OpenAi) checkChatRequestBody(req *dto.OpenAiReqFromClient) error {
+	if req == nil {
+		return errors.New("request body should not be nil")
 	}
 	// check messages
 	messageLen := 0
 	for _, message := range req.Messages {
 		if message.Role != "user" && message.Role != "assistant" && message.Role != "system" {
-			return nil, errors.New("unsupported message role")
+			return errors.New("unsupported message role")
 		}
 		if message.Content == "" {
-			return nil, errors.New("message content should not be empty")
+			return errors.New("message content should not be empty")
 		}
 		messageLen += len(message.Content)
 		if messageLen > o.conf.MessageLengthLimit {
-			return nil, errors.New("message content too long")
+			return errors.New("message content too long")
 		}
 	}
-	return model, nil
+	return nil
 }

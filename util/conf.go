@@ -9,10 +9,12 @@ type Configuration struct {
 	TimeoutSecond      int    `json:"timeoutSecond"`
 	HttpAddress        string `json:"httpAddress"`
 	LogFilePath        string `json:"logFilePath"`
-	OAuthRefreshPath   string `json:"oAuthRefreshPath"`
 	OAuthJwkPath       string `json:"oAuthJwkPath"`
-	JwtIssuer          string `json:"jwtIssuer"`
-	JwtClientId        string `json:"jwtClientId"`
+	OAuthAuthPath      string `json:"oAuthAuthPath"`
+	OAuthRefreshPath   string `json:"oAuthRefreshPath"`
+	OAuthClientId      string `json:"oAuthClientId"`
+	OAuthClientSecret  string `json:"oAuthClientSecret"`
+	OAuthIssuer        string `json:"oAuthIssuer"`
 	MongoDbUri         string `json:"mongoDbUri"`
 	MongoDbName        string `json:"mongoDbName"`
 	OpenAiOrgId        string `json:"openAiOrgId"`
