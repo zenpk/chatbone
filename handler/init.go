@@ -26,14 +26,16 @@ type Handler struct {
 
 	e            *echo.Echo
 	conf         *util.Configuration
+	logger       util.ILogger
 	rsaPublicKey rsa.PublicKey
 	errCodeKey   string
 	err          error
 }
 
-func New(conf *util.Configuration, messageService *service.Message, openAiService *service.OpenAi) (*Handler, error) {
+func New(conf *util.Configuration, logger util.ILogger, messageService *service.Message, openAiService *service.OpenAi) (*Handler, error) {
 	h := new(Handler)
 	h.conf = conf
+	h.logger = logger
 	h.errCodeKey = "errCode"
 	h.err = errors.New("at Handler")
 	h.messageService = messageService
@@ -101,7 +103,7 @@ func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 	return func(c echo.Context) error {
 		accessTokenCookie, err := c.Cookie(CookieAccessToken)
 		if err != nil {
-			c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrUnauthorized, Msg: fmt.Sprintf("get cookie failed: %w", err)})
+			c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrUnauthorized, Msg: fmt.Sprintf("get cookie failed: %v", err)})
 			return nil
 		}
 		claims, err := util.VerifyAndParse(accessTokenCookie.Value, &h.rsaPublicKey)

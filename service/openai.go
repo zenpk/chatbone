@@ -179,6 +179,8 @@ func (o *OpenAi) Chat(uuid string, reqBody *dto.OpenAiReqFromClient, responseCha
 	if err != nil {
 		return errors.Join(err, o.err)
 	}
+	o.user.ReduceBalance(user.Id, int64(inToken)*int64(model.InRate*dal.BalanceMultipleFactor)+
+		int64(outToken)*int64(model.OutRate*dal.BalanceMultipleFactor))
 	if err := o.history.Insert(&dal.History{
 		SessionId:     reqBody.SessionId,
 		Timestamp:     util.GetTimestamp(),

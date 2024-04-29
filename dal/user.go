@@ -40,7 +40,7 @@ func newUser(conf *util.Configuration, client *mongo.Client, logger util.ILogger
 	defer cancel()
 	collection := u.client.Database(u.conf.MongoDbName).Collection(u.collectionName)
 	mod := mongo.IndexModel{
-		Keys: bson.D{{"Id", 1}},
+		Keys: bson.D{{"id", 1}},
 	}
 	_, err := collection.Indexes().CreateOne(ctx, mod)
 	if err != nil {
@@ -51,7 +51,7 @@ func newUser(conf *util.Configuration, client *mongo.Client, logger util.ILogger
 
 func (u *User) SelectByIdInsertIfNotExists(uuid string) (*User, error) {
 	collection := u.client.Database(u.conf.MongoDbName).Collection(u.collectionName)
-	filter := bson.M{"Id": uuid}
+	filter := bson.M{"id": uuid}
 	result := new(User)
 	ctx, cancel := util.GetTimeoutContext(u.conf.TimeoutSecond)
 	defer cancel()
@@ -83,8 +83,8 @@ func (u *User) ReduceBalance(id string, amount int64) (*User, error) {
 		return nil, fmt.Errorf("reduce balance: select user failed: %w", err)
 	}
 	collection := u.client.Database(u.conf.MongoDbName).Collection(u.collectionName)
-	filter := bson.M{"Id": id}
-	update := bson.M{"$set": bson.M{"Balance": user.Balance - amount}}
+	filter := bson.M{"id": id}
+	update := bson.M{"$set": bson.M{"balance": user.Balance - amount}}
 	ctx, cancel := util.GetTimeoutContext(u.conf.TimeoutSecond)
 	defer cancel()
 	// update with mutex
@@ -93,6 +93,7 @@ func (u *User) ReduceBalance(id string, amount int64) (*User, error) {
 	if _, err := collection.UpdateOne(ctx, filter, update); err != nil {
 		return nil, errors.Join(err, u.err)
 	}
+	user.Balance -= amount
 	return user, nil
 }
 
@@ -117,8 +118,8 @@ func (u *User) SelectAll() ([]*User, error) {
 
 func (u *User) UpdateClipboard(id, clipboard string) error {
 	collection := u.client.Database(u.conf.MongoDbName).Collection(u.collectionName)
-	filter := bson.M{"Id": id}
-	update := bson.M{"$set": bson.M{"Clipboard": clipboard}}
+	filter := bson.M{"id": id}
+	update := bson.M{"$set": bson.M{"clipboard": clipboard}}
 	ctx, cancel := util.GetTimeoutContext(u.conf.TimeoutSecond)
 	defer cancel()
 	if _, err := collection.UpdateOne(ctx, filter, update); err != nil {

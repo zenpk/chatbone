@@ -23,9 +23,7 @@ func (h *Handler) chat(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
 	enc := json.NewEncoder(c.Response())
 	go func() {
-		if err := h.openAiService.Chat(uuid, req, replyChan); err != nil {
-			errChan <- err
-		}
+		errChan <- h.openAiService.Chat(uuid, req, replyChan)
 	}()
 	for {
 		select {
@@ -39,9 +37,11 @@ func (h *Handler) chat(c echo.Context) error {
 			c.Response().Flush()
 			if reply == dto.MessageEnding {
 				c.Response().WriteHeader(http.StatusOK)
-				return nil
 			}
 		case err := <-errChan:
+			if err != nil {
+				h.logger.Errorf("chat error: %v", err)
+			}
 			return err
 		}
 	}

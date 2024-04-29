@@ -65,7 +65,7 @@ func main() {
 		panic(err)
 	}
 
-	hd, err := handler.New(conf, messageService, openAiService)
+	hd, err := handler.New(conf, logger, messageService, openAiService)
 	if err != nil {
 		panic(err)
 	}
