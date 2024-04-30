@@ -14,7 +14,7 @@ func (h *Handler) chat(c echo.Context) error {
 	const ChanSize = 1024
 	req := new(dto.OpenAiReqFromClient) // TODO change to dto.ChatReqFromClient
 	if err := c.Bind(req); err != nil {
-		c.Set(h.errCodeKey, dto.ErrInput)
+		c.Set(ErrCodeKey, dto.ErrInput)
 		return err
 	}
 	uuid := c.Get("uuid").(string)

@@ -15,13 +15,9 @@ type AuthorizeReqToOAuth struct {
 	AuthorizeReqFromClient
 }
 
-type RefreshReqFromClient struct {
-	RefreshToken string `json:"refreshToken"`
-}
-
 type RefreshReqToOAuth struct {
 	ClientInfo
-	RefreshReqFromClient
+	RefreshToken string `json:"refreshToken"`
 }
 
 type RespFromOAuth struct {

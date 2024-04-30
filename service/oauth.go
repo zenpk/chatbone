@@ -60,13 +60,13 @@ func (o *OAuth) Authorization(reqBody *dto.AuthorizeReqFromClient) (*dto.RespFro
 	return respBody, nil
 }
 
-func (o *OAuth) Refresh(reqBody *dto.RefreshReqFromClient) (*dto.RespFromOAuth, error) {
+func (o *OAuth) Refresh(refreshToken string) (*dto.RespFromOAuth, error) {
 	reqByte, err := json.Marshal(dto.RefreshReqToOAuth{
 		ClientInfo: dto.ClientInfo{
 			ClientId:     o.conf.OAuthClientId,
 			ClientSecret: o.conf.OAuthClientSecret,
 		},
-		RefreshReqFromClient: *reqBody,
+		RefreshToken: refreshToken,
 	})
 	if err != nil {
 		return nil, errors.Join(err, o.err)

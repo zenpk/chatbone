@@ -7,7 +7,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
 	"math/big"
 	"net/http"
 	"strings"
@@ -30,7 +29,6 @@ type Handler struct {
 	conf         *util.Configuration
 	logger       util.ILogger
 	rsaPublicKey rsa.PublicKey
-	errCodeKey   string
 	err          error
 }
 
@@ -40,7 +38,6 @@ func New(conf *util.Configuration, logger util.ILogger,
 	h := new(Handler)
 	h.conf = conf
 	h.logger = logger
-	h.errCodeKey = "errCode"
 	h.err = errors.New("at Handler")
 
 	h.modelService = modelService
@@ -77,7 +74,7 @@ func New(conf *util.Configuration, logger util.ILogger,
 	h.e = echo.New()
 	h.e.Use(middleware.Recover())
 	h.e.HTTPErrorHandler = func(err error, c echo.Context) {
-		errCode, ok := c.Get(h.errCodeKey).(int)
+		errCode, ok := c.Get(ErrCodeKey).(int)
 		if !ok {
 			errCode = dto.ErrUnknown
 		}
@@ -98,7 +95,7 @@ func New(conf *util.Configuration, logger util.ILogger,
 		LogURIPath:  true,
 		LogRemoteIP: true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			log.Printf("| %v | %-7s | %v | %v\n", v.Status, v.Method, v.URIPath, v.RemoteIP)
+			h.logger.Printf("| %v | %-7s | %v | %v\n", v.Status, v.Method, v.URIPath, v.RemoteIP)
 			return v.Error
 		},
 	}))
