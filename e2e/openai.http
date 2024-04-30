@@ -4,4 +4,15 @@
 ###
 POST {{url}}/chat
 Content-Type: application/json
-Authorization: Bearer {{token}}
+Cookie: accessToken={{token}}
+
+{
+    "modelId": 2,
+    "sessionId": "abc",
+    "messages": [
+        {
+            "role": "user",
+            "content": "say hi, don't say others"
+        }
+    ]
+}

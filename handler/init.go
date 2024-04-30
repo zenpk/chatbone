@@ -132,9 +132,10 @@ func (h *Handler) setRoutes() {
 	h.e.POST("/authorization", h.Authorization)
 	h.e.POST("/refresh", h.Refresh)
 
-	// auth needed
-	h.e.Use(h.jwtMiddleware)
-	h.e.POST("/chat", h.chat)
+	// auth group
+	g := h.e.Group("/")
+	g.Use(h.jwtMiddleware)
+	g.POST("/chat", h.chat)
 }
 
 func (h *Handler) Shutdown(ctx context.Context) error {

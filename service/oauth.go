@@ -43,7 +43,7 @@ func (o *OAuth) Authorization(reqBody *dto.AuthorizeReqFromClient) (*dto.RespFro
 	}
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{
-		Timeout: time.Duration(o.conf.TimeoutSecond),
+		Timeout: time.Duration(o.conf.TimeoutSecond) * time.Second,
 	}
 	resp, err := client.Do(req)
 	if err != nil {
@@ -77,7 +77,7 @@ func (o *OAuth) Refresh(refreshToken string) (*dto.RespFromOAuth, error) {
 	}
 	req.Header.Set("Content-Type", "application/json")
 	client := &http.Client{
-		Timeout: time.Duration(o.conf.TimeoutSecond),
+		Timeout: time.Duration(o.conf.TimeoutSecond) * time.Second,
 	}
 	resp, err := client.Do(req)
 	if err != nil {

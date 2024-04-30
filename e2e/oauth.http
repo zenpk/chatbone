@@ -1,0 +1,18 @@
+@url = http://127.0.0.1:8005
+@token =
+
+###
+POST {{url}}/authorization
+Content-Type: application/json
+
+{
+  "authorizationCode": "oGG2yKhnE4f7rjhYvqSvsS1AwViRjq0tNwPBnwn7hfPTz2YjSI7Z6XJ4HVQXOH3uYaODSdRkDW98DmGycYTdEA9yXVosWJPEI71zURiiERZDLGYDj1QyZBqwlBAaOpGt",
+  "codeVerifier": "tpWFpflpskMgYA"
+}
+
+###
+POST {{url}}/refresh
+Content-Type: application/json
+Cookie: refreshToken={{token}}
+
+{}

@@ -51,7 +51,7 @@ func (h *Handler) Refresh(c echo.Context) error {
 }
 
 func (h *Handler) setTokens(c echo.Context, tokenResp *dto.RespFromOAuth) error {
-	if tokenResp == nil || tokenResp.AccessToken == "" || tokenResp.RefreshToken == "" {
+	if tokenResp == nil || tokenResp.AccessToken == "" {
 		return errors.New("invalid token response")
 	}
 	// no expires for cookies for simplicity
@@ -63,12 +63,15 @@ func (h *Handler) setTokens(c echo.Context, tokenResp *dto.RespFromOAuth) error 
 		Secure:   true,
 		Path:     "/",
 	})
-	c.SetCookie(&http.Cookie{
-		Name:     CookieRefreshToken,
-		Value:    tokenResp.RefreshToken,
-		HttpOnly: true,
-		Secure:   true,
-		Path:     "/refresh",
-	})
+	// refresh token could be nil if it's returned from refresh request
+	if tokenResp.RefreshToken != "" {
+		c.SetCookie(&http.Cookie{
+			Name:     CookieRefreshToken,
+			Value:    tokenResp.RefreshToken,
+			HttpOnly: true,
+			Secure:   true,
+			Path:     "/refresh",
+		})
+	}
 	return nil
 }
