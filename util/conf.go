@@ -9,6 +9,8 @@ type Configuration struct {
 	TimeoutSecond      int    `json:"timeoutSecond"`
 	HttpAddress        string `json:"httpAddress"`
 	LogFilePath        string `json:"logFilePath"`
+	Domain             string `json:"domain"`
+	CookiePathPrefix   string `json:"cookiePathPrefix"`
 	OAuthJwkPath       string `json:"oAuthJwkPath"`
 	OAuthAuthPath      string `json:"oAuthAuthPath"`
 	OAuthRefreshPath   string `json:"oAuthRefreshPath"`

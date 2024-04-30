@@ -61,7 +61,8 @@ func (h *Handler) setTokens(c echo.Context, tokenResp *dto.RespFromOAuth) error 
 		Value:    tokenResp.AccessToken,
 		HttpOnly: true,
 		Secure:   true,
-		Path:     "/",
+		Domain:   h.conf.Domain,
+		Path:     h.conf.CookiePathPrefix + "/",
 	})
 	// refresh token could be nil if it's returned from refresh request
 	if tokenResp.RefreshToken != "" {
@@ -70,7 +71,7 @@ func (h *Handler) setTokens(c echo.Context, tokenResp *dto.RespFromOAuth) error 
 			Value:    tokenResp.RefreshToken,
 			HttpOnly: true,
 			Secure:   true,
-			Path:     "/refresh",
+			Path:     h.conf.CookiePathPrefix + "/refresh",
 		})
 	}
 	return nil
