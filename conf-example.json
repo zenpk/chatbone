@@ -1,0 +1,16 @@
+{
+  "timeoutSecond": 10,
+  "httpAddress": "0.0.0.0:8005",
+  "logFilePath": "./local.log",
+  "oAuthJwkPath": "https://oauth.com/public-key",
+  "oAuthAuthPath": "https://oauth.com/authorize",
+  "oAuthRefreshPath": "https://oauth.com/refresh",
+  "oAuthClientId": "my",
+  "oAuthClientSecret": "mysecret",
+  "oAuthIssuer": "myoauth",
+  "mongoDbUri": "mongodb+srv://[username]:[password]@[subdomain].mongodb.net/?retryWrites=true&w=majority",
+  "mongoDbName": "mydb",
+  "openAiOrgId": "org-random",
+  "openAiApiKey": "sk-random",
+  "messageLengthLimit": 100000
+}
