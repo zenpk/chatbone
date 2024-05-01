@@ -74,7 +74,7 @@ func New(conf *util.Configuration, logger util.ILogger,
 	h.e = echo.New()
 	h.e.Use(middleware.Recover())
 	h.e.HTTPErrorHandler = func(err error, c echo.Context) {
-		errCode, ok := c.Get(ErrCodeKey).(int)
+		errCode, ok := c.Get(KeyErrCode).(int)
 		if !ok {
 			errCode = dto.ErrUnknown
 		}
@@ -88,6 +88,12 @@ func New(conf *util.Configuration, logger util.ILogger,
 		AllowHeaders: []string{"*"},
 	}))
 	h.e.Use(middleware.BodyLimit("2M"))
+	h.e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set(KeyUsername, "unknown user")
+			return next(c)
+		}
+	})
 	h.e.Use(middleware.RequestLoggerWithConfig(middleware.RequestLoggerConfig{
 		LogError:    true,
 		LogStatus:   true,
@@ -95,7 +101,7 @@ func New(conf *util.Configuration, logger util.ILogger,
 		LogURIPath:  true,
 		LogRemoteIP: true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			h.logger.Printf("| %v | %-7s | %v | %v\n", v.Status, v.Method, v.URIPath, v.RemoteIP)
+			h.logger.Printf("%v | %v | %-7s | %v | %v | %v\n", v.Status, c.Get(KeyErrCode), v.Method, v.URIPath, v.RemoteIP, c.Get(KeyUsername))
 			return v.Error
 		},
 	}))
@@ -123,7 +129,8 @@ func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 			return nil
 		}
 		// set user id to context
-		c.Set("uuid", claims.Uuid)
+		c.Set(KeyUuid, claims.Uuid)
+		c.Set(KeyUsername, claims.Username)
 		return next(c)
 	}
 }
@@ -131,11 +138,16 @@ func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 func (h *Handler) setRoutes() {
 	h.e.POST("/authorization", h.Authorization)
 	h.e.POST("/refresh", h.Refresh)
+	h.e.POST("/refresh/verify", h.Verify)
 
 	// auth group
 	g := h.e.Group("/")
 	g.Use(h.jwtMiddleware)
 	g.POST("/chat", h.chat)
+}
+
+func (h *Handler) success(c echo.Context) error {
+	return c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrOk, Msg: "success"})
 }
 
 func (h *Handler) Shutdown(ctx context.Context) error {

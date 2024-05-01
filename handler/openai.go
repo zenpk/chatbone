@@ -14,10 +14,10 @@ func (h *Handler) chat(c echo.Context) error {
 	const ChanSize = 1024
 	req := new(dto.OpenAiReqFromClient) // TODO change to dto.ChatReqFromClient
 	if err := c.Bind(req); err != nil {
-		c.Set(ErrCodeKey, dto.ErrInput)
+		c.Set(KeyErrCode, dto.ErrInput)
 		return err
 	}
-	uuid := c.Get("uuid").(string)
+	uuid := c.Get(KeyUuid).(string)
 	replyChan := make(chan string, ChanSize)
 	errChan := make(chan error, 1)
 	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")

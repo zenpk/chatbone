@@ -1,5 +1,6 @@
 @url = http://127.0.0.1:8005
-@token =
+@access = abc
+@refresh = 
 
 ###
 POST {{url}}/authorization
@@ -13,6 +14,16 @@ Content-Type: application/json
 ###
 POST {{url}}/refresh
 Content-Type: application/json
-Cookie: refreshToken={{token}}
+Cookie: refreshToken={{refresh}};
 
 {}
+
+###
+POST {{url}}/refresh/verify
+Content-Type: application/json
+Cookie: accessToken={{access}}; refreshToken={{refresh}};
+
+{
+  "action": "chat",
+  "modelId": "1"
+}

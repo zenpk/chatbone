@@ -1,6 +1,7 @@
 package util
 
 import (
+	"fmt"
 	"log"
 	"os"
 	"time"
@@ -35,33 +36,41 @@ func NewLogger(conf *Configuration) (*Logger, error) {
 	return l, nil
 }
 
+func (l *Logger) Printf(format string, args ...interface{}) {
+	content := fmt.Sprintf(format, args...)
+	l.printWithTime(content)
+}
+
+func (l *Logger) Println(any ...interface{}) {
+	content := fmt.Sprintln(any...)
+	l.printWithTime(content)
+}
+
 func (l *Logger) Warnf(format string, args ...interface{}) {
-	l.printTime()
-	l.Printf("WARN : "+format, args...)
+	content := fmt.Sprintf("WARN : "+format, args...)
+	l.printWithTime(content)
 }
 
 func (l *Logger) Warnln(any ...interface{}) {
-	l.printTime()
-	l.Print(append([]interface{}{"WARN :"}, any...)...)
-	l.Print("\n")
+	content := fmt.Sprintln(append([]interface{}{"WARN :"}, any...)...)
+	l.printWithTime(content)
 }
 
 func (l *Logger) Errorf(format string, args ...interface{}) {
-	l.printTime()
-	l.Printf("ERROR: "+format, args...)
+	content := fmt.Sprintf("ERROR: "+format, args...)
+	l.printWithTime(content)
 }
 
 func (l *Logger) Errorln(any ...interface{}) {
-	l.printTime()
-	l.Print(append([]interface{}{"ERROR:"}, any...)...)
-	l.Print("\n")
+	content := fmt.Sprintln(append([]interface{}{"ERROR:"}, any...)...)
+	l.printWithTime(content)
 }
 
 func (l *Logger) Close() error {
 	return l.logFile.Close()
 }
 
-func (l *Logger) printTime() {
+func (l *Logger) printWithTime(content string) {
 	const Format = "2006-01-02 15:04:05"
-	l.Printf("[%s] ", time.Now().UTC().Format(Format))
+	l.Logger.Printf("[%s] %s", time.Now().UTC().Format(Format), content)
 }

@@ -1,7 +1,10 @@
 package handler
 
 const (
-	ErrCodeKey         = "errCode"
+	KeyErrCode         = "errCode"
+	KeyUsername        = "username"
+	KeyUuid            = "uuid"
 	CookieAccessToken  = "accessToken"
 	CookieRefreshToken = "refreshToken"
+	ActionChat         = "chat"
 )

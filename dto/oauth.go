@@ -15,6 +15,10 @@ type AuthorizeReqToOAuth struct {
 	AuthorizeReqFromClient
 }
 
+type RefreshReqWithBody struct {
+	Action string `json:"action"`
+}
+
 type RefreshReqToOAuth struct {
 	ClientInfo
 	RefreshToken string `json:"refreshToken"`

@@ -11,43 +11,64 @@ import (
 func (h *Handler) Authorization(c echo.Context) error {
 	reqBody := new(dto.AuthorizeReqFromClient)
 	if err := c.Bind(reqBody); err != nil {
-		c.Set(ErrCodeKey, dto.ErrInput)
+		c.Set(KeyErrCode, dto.ErrInput)
 		return err
 	}
 	if reqBody.AuthorizationCode == "" || reqBody.CodeVerifier == "" {
-		c.Set(ErrCodeKey, dto.ErrInput)
+		c.Set(KeyErrCode, dto.ErrInput)
 		return errors.New("invalid input")
 	}
 	resp, err := h.oAuthService.Authorization(reqBody)
 	if err != nil {
-		c.Set(ErrCodeKey, dto.ErrAuthFailed)
+		c.Set(KeyErrCode, dto.ErrAuthFailed)
 		return err
 	}
 	if err := h.setTokens(c, resp); err != nil {
 		return err
 	}
-	return nil
+	return h.success(c)
 }
 
 func (h *Handler) Refresh(c echo.Context) error {
 	refreshTokenCookie, err := c.Cookie(CookieRefreshToken)
 	if err != nil {
-		c.Set(ErrCodeKey, dto.ErrInput)
+		c.Set(KeyErrCode, dto.ErrInput)
 		return err
 	}
 	if refreshTokenCookie.Value == "" {
-		c.Set(ErrCodeKey, dto.ErrInput)
+		c.Set(KeyErrCode, dto.ErrInput)
 		return errors.New("refresh token is empty")
 	}
 	resp, err := h.oAuthService.Refresh(refreshTokenCookie.Value)
 	if err != nil {
-		c.Set(ErrCodeKey, dto.ErrRefreshFailed)
+		c.Set(KeyErrCode, dto.ErrRefreshFailed)
 		return err
 	}
 	if err := h.setTokens(c, resp); err != nil {
 		return err
 	}
-	return nil
+	// if the refresh request comes with a body, proceed with the corresponding action
+	req := new(dto.RefreshReqWithBody)
+	if err := c.Bind(req); err != nil {
+		c.Set(KeyErrCode, dto.ErrInput)
+		return errors.New("invalid refresh request body, the request should at least contain empty body")
+	}
+	switch req.Action {
+	case ActionChat:
+		return h.chat(c)
+	default:
+		return h.success(c)
+	}
+}
+
+// Verify will first verify the access token, if not valid, it will try to refresh the token
+func (h *Handler) Verify(c echo.Context) error {
+	checkJwt := h.jwtMiddleware(func(c echo.Context) error { return nil })
+	if err := checkJwt(c); err != nil {
+		// access token is invalid
+		return h.Refresh(c)
+	}
+	return h.success(c)
 }
 
 func (h *Handler) setTokens(c echo.Context, tokenResp *dto.RespFromOAuth) error {
@@ -74,5 +95,5 @@ func (h *Handler) setTokens(c echo.Context, tokenResp *dto.RespFromOAuth) error 
 			Path:     h.conf.CookiePathPrefix + "/refresh",
 		})
 	}
-	return nil
+	return h.success(c)
 }
