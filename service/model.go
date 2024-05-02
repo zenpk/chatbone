@@ -24,6 +24,10 @@ func NewModel(conf *util.Configuration, logger util.ILogger, db *dal.Database) (
 	return m, nil
 }
 
+func (m *Model) GetAll() ([]*dal.Model, error) {
+	return m.model.SelectAll()
+}
+
 func (m *Model) GetAndCheckModelById(id int) (*dal.Model, error) {
 	model, err := m.model.SelectById(id)
 	if err != nil {

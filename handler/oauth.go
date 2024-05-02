@@ -26,7 +26,7 @@ func (h *Handler) Authorization(c echo.Context) error {
 	if err := h.setTokens(c, resp); err != nil {
 		return err
 	}
-	return h.success(c)
+	return h.verifyResp(c)
 }
 
 func (h *Handler) Refresh(c echo.Context) error {
@@ -47,8 +47,9 @@ func (h *Handler) Refresh(c echo.Context) error {
 	if err := h.setTokens(c, resp); err != nil {
 		return err
 	}
-	// if the refresh request comes with a body, proceed with the corresponding action
-	req := new(dto.RefreshReqWithBody)
+	// if the refresh request comes with a body
+	// then it is a quick refresh request, proceed with the corresponding action
+	req := new(dto.QuickRefreshReq)
 	if err := c.Bind(req); err != nil {
 		c.Set(KeyErrCode, dto.ErrInput)
 		return errors.New("invalid refresh request body, the request should at least contain empty body")
@@ -57,7 +58,7 @@ func (h *Handler) Refresh(c echo.Context) error {
 	case ActionChat:
 		return h.chat(c)
 	default:
-		return h.success(c)
+		return h.verifyResp(c)
 	}
 }
 
@@ -68,7 +69,20 @@ func (h *Handler) Verify(c echo.Context) error {
 		// access token is invalid
 		return h.Refresh(c)
 	}
-	return h.success(c)
+	return h.verifyResp(c)
+}
+
+// verifyResp returns some initial data (e.g. models) to the client
+// this can reduce a round-trip on initial loading
+func (h *Handler) verifyResp(c echo.Context) error {
+	models, err := h.modelService.GetAll()
+	if err != nil {
+		return err
+	}
+	return c.JSON(http.StatusOK, dto.VerifyResp{
+		CommonResp: dto.CommonResp{Code: dto.ErrOk, Msg: "success"},
+		Models:     models,
+	})
 }
 
 func (h *Handler) setTokens(c echo.Context, tokenResp *dto.RespFromOAuth) error {
