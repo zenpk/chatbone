@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"math/big"
 	"net/http"
-	"strings"
 	"time"
 
 	"github.com/labstack/echo/v4"
@@ -159,15 +158,15 @@ func (h *Handler) ListenAndServe() error {
 }
 
 // getTokenFromAuthorizationHeader not used
-func (h *Handler) getTokenFromAuthorizationHeader(c echo.Context) (string, error) {
-	authorization := c.Request().Header.Get("Authorization")
-	if authorization == "" {
-		return "", errors.New("missing Authorization header")
-	}
-	split := strings.Split(authorization, " ")
-	if len(split) != 2 {
-		return "", errors.New("invalid Authorization header")
-	}
-	token := split[1]
-	return token, nil
-}
+// func (h *Handler) getTokenFromAuthorizationHeader(c echo.Context) (string, error) {
+// 	authorization := c.Request().Header.Get("Authorization")
+// 	if authorization == "" {
+// 		return "", errors.New("missing Authorization header")
+// 	}
+// 	split := strings.Split(authorization, " ")
+// 	if len(split) != 2 {
+// 		return "", errors.New("invalid Authorization header")
+// 	}
+// 	token := split[1]
+// 	return token, nil
+// }
