@@ -31,9 +31,7 @@ func (h *Handler) Authorization(c echo.Context) error {
 
 // Refresh will first verify the access token, if not valid, it will try to refresh the token
 func (h *Handler) Refresh(c echo.Context) error {
-	errPass := errors.New("jwt passed")
-	checkJwt := h.jwtMiddleware(func(c echo.Context) error { return errPass })
-	if err := checkJwt(c); err == errPass {
+	if _, err := h.jwtCheck(c); err == nil {
 		// access token is still valid
 		return h.verifyResp(c)
 	}

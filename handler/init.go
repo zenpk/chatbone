@@ -109,32 +109,6 @@ func New(conf *util.Configuration, logger util.ILogger,
 	return h, nil
 }
 
-func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
-	return func(c echo.Context) error {
-		accessTokenCookie, err := c.Cookie(CookieAccessToken)
-		if err != nil {
-			c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrUnauthorized, Msg: fmt.Sprintf("get cookie failed: %v", err)})
-			return nil
-		}
-		claims, err := util.VerifyAndParse(accessTokenCookie.Value, &h.rsaPublicKey)
-		if err != nil {
-			return errors.Join(err, h.err)
-		}
-		if claims.Issuer != h.conf.OAuthIssuer {
-			c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrUnauthorized, Msg: "wrong JWT issuer"})
-			return nil
-		}
-		if !claims.IsValidAt(time.Now()) {
-			c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrUnauthorized, Msg: "JWT token expired"})
-			return nil
-		}
-		// set user id to context
-		c.Set(KeyUuid, claims.Uuid)
-		c.Set(KeyUsername, claims.Username)
-		return next(c)
-	}
-}
-
 func (h *Handler) setRoutes() {
 	h.e.POST("/authorization", h.Authorization)
 	h.e.POST("/refresh", h.Refresh)
@@ -143,6 +117,37 @@ func (h *Handler) setRoutes() {
 	g := h.e.Group("/")
 	g.Use(h.jwtMiddleware)
 	g.POST("/chat", h.chat)
+}
+
+func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
+	return func(c echo.Context) error {
+		claims, err := h.jwtCheck(c)
+		if err != nil {
+			return c.JSON(http.StatusOK, dto.CommonResp{Code: dto.ErrAuthFailed, Msg: err.Error()})
+		}
+		// set user id to context
+		c.Set(KeyUuid, claims.Uuid)
+		c.Set(KeyUsername, claims.Username)
+		return next(c)
+	}
+}
+
+func (h *Handler) jwtCheck(c echo.Context) (*util.Claims, error) {
+	accessTokenCookie, err := c.Cookie(CookieAccessToken)
+	if err != nil {
+		return nil, errors.Join(fmt.Errorf("get cookie failed: %w", err), h.err)
+	}
+	claims, err := util.VerifyAndParse(accessTokenCookie.Value, &h.rsaPublicKey)
+	if err != nil {
+		return nil, errors.Join(err, h.err)
+	}
+	if claims.Issuer != h.conf.OAuthIssuer {
+		return nil, errors.Join(errors.New("wrong JWT issuer"), h.err)
+	}
+	if !claims.IsValidAt(time.Now()) {
+		return nil, errors.Join(errors.New("JWT token expired"), h.err)
+	}
+	return claims, nil
 }
 
 func (h *Handler) success(c echo.Context) error {
