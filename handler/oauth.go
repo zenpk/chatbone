@@ -104,5 +104,5 @@ func (h *Handler) setTokens(c echo.Context, tokenResp *dto.RespFromOAuth) error 
 			Path:     h.conf.CookiePathPrefix + "/refresh",
 		})
 	}
-	return h.success(c)
+	return nil
 }
