@@ -82,9 +82,10 @@ func New(conf *util.Configuration, logger util.ILogger,
 		}
 	}
 	h.e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: h.conf.AllowOrigins,
-		AllowMethods: []string{"*"},
-		AllowHeaders: []string{"*"},
+		AllowOrigins:     h.conf.AllowOrigins,
+		AllowMethods:     []string{"*"},
+		AllowHeaders:     []string{"*"},
+		AllowCredentials: true,
 	}))
 	h.e.Use(middleware.BodyLimit("2M"))
 	h.e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
