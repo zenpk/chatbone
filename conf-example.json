@@ -2,7 +2,7 @@
   "timeoutSecond": 10,
   "httpAddress": "0.0.0.0:8005",
   "logFilePath": "./local.log",
-  "domain": "localhost:8005",
+  "domain": "localhost",
   "allowOrigins": ["http://localhost:5173"],
   "cookiePathPrefix": "/",
   "oAuthJwkPath": "https://oauth.com/public-key",
