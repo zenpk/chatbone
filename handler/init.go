@@ -101,7 +101,11 @@ func New(conf *util.Configuration, logger util.ILogger,
 		LogURIPath:  true,
 		LogRemoteIP: true,
 		LogValuesFunc: func(c echo.Context, v middleware.RequestLoggerValues) error {
-			h.logger.Printf("%v | %v | %-7s | %v | %v | %v\n", v.Status, c.Get(KeyErrCode), v.Method, v.URIPath, v.RemoteIP, c.Get(KeyUsername))
+			errCode, ok := c.Get(KeyErrCode).(int)
+			if !ok {
+				errCode = dto.ErrUnknown
+			}
+			h.logger.Printf("%v | %v | %-7s | %v | %v | %v\n", v.Status, errCode, v.Method, v.URIPath, v.RemoteIP, c.Get(KeyUsername))
 			return v.Error
 		},
 	}))
