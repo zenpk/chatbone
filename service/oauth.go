@@ -26,7 +26,7 @@ func NewOAuth(conf *util.Configuration, logger util.ILogger) (*OAuth, error) {
 	return o, nil
 }
 
-func (o *OAuth) Authorization(reqBody *dto.AuthorizeReqFromClient) (*dto.RespFromOAuth, error) {
+func (o *OAuth) Authorize(reqBody *dto.AuthorizeReqFromClient) (*dto.RespFromOAuth, error) {
 	reqByte, err := json.Marshal(dto.AuthorizeReqToOAuth{
 		ClientInfo: dto.ClientInfo{
 			ClientId:     o.conf.OAuthClientId,

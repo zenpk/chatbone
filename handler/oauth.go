@@ -8,7 +8,7 @@ import (
 	"github.com/zenpk/chatbone/dto"
 )
 
-func (h *Handler) Authorization(c echo.Context) error {
+func (h *Handler) Authorize(c echo.Context) error {
 	reqBody := new(dto.AuthorizeReqFromClient)
 	if err := c.Bind(reqBody); err != nil {
 		c.Set(KeyErrCode, dto.ErrInput)
@@ -18,7 +18,7 @@ func (h *Handler) Authorization(c echo.Context) error {
 		c.Set(KeyErrCode, dto.ErrInput)
 		return errors.New("invalid input")
 	}
-	resp, err := h.oAuthService.Authorization(reqBody)
+	resp, err := h.oAuthService.Authorize(reqBody)
 	if err != nil {
 		c.Set(KeyErrCode, dto.ErrAuthFailed)
 		return err

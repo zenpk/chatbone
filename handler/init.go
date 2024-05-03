@@ -110,7 +110,7 @@ func New(conf *util.Configuration, logger util.ILogger,
 }
 
 func (h *Handler) setRoutes() {
-	h.e.POST("/authorization", h.Authorization)
+	h.e.POST("/authorize", h.Authorize)
 	h.e.POST("/refresh", h.Refresh)
 
 	// auth group
