@@ -82,7 +82,7 @@ func New(conf *util.Configuration, logger util.ILogger,
 		}
 	}
 	h.e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
-		AllowOrigins: []string{"*"},
+		AllowOrigins: h.conf.AllowOrigins,
 		AllowMethods: []string{"*"},
 		AllowHeaders: []string{"*"},
 	}))

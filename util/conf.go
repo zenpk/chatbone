@@ -6,22 +6,23 @@ import (
 )
 
 type Configuration struct {
-	TimeoutSecond      int    `json:"timeoutSecond"`
-	HttpAddress        string `json:"httpAddress"`
-	LogFilePath        string `json:"logFilePath"`
-	Domain             string `json:"domain"`
-	CookiePathPrefix   string `json:"cookiePathPrefix"`
-	OAuthJwkPath       string `json:"oAuthJwkPath"`
-	OAuthAuthPath      string `json:"oAuthAuthPath"`
-	OAuthRefreshPath   string `json:"oAuthRefreshPath"`
-	OAuthClientId      string `json:"oAuthClientId"`
-	OAuthClientSecret  string `json:"oAuthClientSecret"`
-	OAuthIssuer        string `json:"oAuthIssuer"`
-	MongoDbUri         string `json:"mongoDbUri"`
-	MongoDbName        string `json:"mongoDbName"`
-	OpenAiOrgId        string `json:"openAiOrgId"`
-	OpenAiApiKey       string `json:"openAiApiKey"`
-	MessageLengthLimit int    `json:"messageLengthLimit"`
+	TimeoutSecond      int      `json:"timeoutSecond"`
+	HttpAddress        string   `json:"httpAddress"`
+	LogFilePath        string   `json:"logFilePath"`
+	Domain             string   `json:"domain"`
+	AllowOrigins       []string `json:"allowOrigins"`
+	CookiePathPrefix   string   `json:"cookiePathPrefix"`
+	OAuthJwkPath       string   `json:"oAuthJwkPath"`
+	OAuthAuthPath      string   `json:"oAuthAuthPath"`
+	OAuthRefreshPath   string   `json:"oAuthRefreshPath"`
+	OAuthClientId      string   `json:"oAuthClientId"`
+	OAuthClientSecret  string   `json:"oAuthClientSecret"`
+	OAuthIssuer        string   `json:"oAuthIssuer"`
+	MongoDbUri         string   `json:"mongoDbUri"`
+	MongoDbName        string   `json:"mongoDbName"`
+	OpenAiOrgId        string   `json:"openAiOrgId"`
+	OpenAiApiKey       string   `json:"openAiApiKey"`
+	MessageLengthLimit int      `json:"messageLengthLimit"`
 }
 
 func NewConf(mode string) (*Configuration, error) {
