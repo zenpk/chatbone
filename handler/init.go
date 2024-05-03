@@ -84,7 +84,7 @@ func New(conf *util.Configuration, logger util.ILogger,
 	h.e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
 		AllowOrigins:     h.conf.AllowOrigins,
 		AllowMethods:     []string{"*"},
-		AllowHeaders:     []string{"*"},
+		AllowHeaders:     []string{"Origin", "X-Requested-With", "Content-Type", "Accept", "Authorization"},
 		AllowCredentials: true,
 	}))
 	h.e.Use(middleware.BodyLimit("2M"))
