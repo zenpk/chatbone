@@ -137,7 +137,6 @@ func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 func (h *Handler) setRoutes() {
 	h.e.POST("/authorization", h.Authorization)
 	h.e.POST("/refresh", h.Refresh)
-	h.e.POST("/refresh/verify", h.Verify)
 
 	// auth group
 	g := h.e.Group("/")
@@ -156,17 +155,3 @@ func (h *Handler) Shutdown(ctx context.Context) error {
 func (h *Handler) ListenAndServe() error {
 	return h.e.Start(h.conf.HttpAddress)
 }
-
-// getTokenFromAuthorizationHeader not used
-// func (h *Handler) getTokenFromAuthorizationHeader(c echo.Context) (string, error) {
-// 	authorization := c.Request().Header.Get("Authorization")
-// 	if authorization == "" {
-// 		return "", errors.New("missing Authorization header")
-// 	}
-// 	split := strings.Split(authorization, " ")
-// 	if len(split) != 2 {
-// 		return "", errors.New("invalid Authorization header")
-// 	}
-// 	token := split[1]
-// 	return token, nil
-// }

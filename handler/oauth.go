@@ -29,7 +29,13 @@ func (h *Handler) Authorization(c echo.Context) error {
 	return h.verifyResp(c)
 }
 
+// Refresh will first verify the access token, if not valid, it will try to refresh the token
 func (h *Handler) Refresh(c echo.Context) error {
+	checkJwt := h.jwtMiddleware(func(c echo.Context) error { return nil })
+	if err := checkJwt(c); err == nil {
+		// access token is still valid
+		return h.verifyResp(c)
+	}
 	refreshTokenCookie, err := c.Cookie(CookieRefreshToken)
 	if err != nil {
 		c.Set(KeyErrCode, dto.ErrInput)
@@ -60,16 +66,6 @@ func (h *Handler) Refresh(c echo.Context) error {
 	default:
 		return h.verifyResp(c)
 	}
-}
-
-// Verify will first verify the access token, if not valid, it will try to refresh the token
-func (h *Handler) Verify(c echo.Context) error {
-	checkJwt := h.jwtMiddleware(func(c echo.Context) error { return nil })
-	if err := checkJwt(c); err != nil {
-		// access token is invalid
-		return h.Refresh(c)
-	}
-	return h.verifyResp(c)
 }
 
 // verifyResp returns some initial data (e.g. models) to the client

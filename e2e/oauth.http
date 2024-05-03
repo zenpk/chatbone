@@ -18,8 +18,8 @@ Cookie: refreshToken={{refresh}};
 
 {}
 
-###
-POST {{url}}/refresh/verify
+### first verify then refresh
+POST {{url}}/refresh
 Content-Type: application/json
 Cookie: accessToken={{access}}; refreshToken={{refresh}};
 
