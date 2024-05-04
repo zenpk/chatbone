@@ -23,7 +23,7 @@ func (h *Handler) Authorize(c echo.Context) error {
 		c.Set(KeyErrCode, dto.ErrAuthFailed)
 		return err
 	}
-	if err := h.setTokens(c, resp); err != nil {
+	if err := h.setCookies(c, resp); err != nil {
 		return err
 	}
 	return h.verifyResp(c)
@@ -49,7 +49,7 @@ func (h *Handler) Refresh(c echo.Context) error {
 		c.Set(KeyErrCode, dto.ErrRefreshFailed)
 		return err
 	}
-	if err := h.setTokens(c, resp); err != nil {
+	if err := h.setCookies(c, resp); err != nil {
 		return err
 	}
 	// if the refresh request comes with a body
@@ -80,7 +80,7 @@ func (h *Handler) verifyResp(c echo.Context) error {
 	})
 }
 
-func (h *Handler) setTokens(c echo.Context, tokenResp *dto.RespFromOAuth) error {
+func (h *Handler) setCookies(c echo.Context, tokenResp *dto.RespFromOAuth) error {
 	if tokenResp == nil || tokenResp.AccessToken == "" {
 		return errors.New("invalid token response")
 	}

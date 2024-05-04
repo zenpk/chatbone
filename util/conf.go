@@ -11,6 +11,7 @@ type Configuration struct {
 	LogFilePath        string   `json:"logFilePath"`
 	Domain             string   `json:"domain"`
 	AllowOrigins       []string `json:"allowOrigins"`
+	AuthEnabled        bool     `json:"authEnabled"`
 	CookiePathPrefix   string   `json:"cookiePathPrefix"`
 	OAuthJwkPath       string   `json:"oAuthJwkPath"`
 	OAuthAuthPath      string   `json:"oAuthAuthPath"`

@@ -59,7 +59,7 @@ func (o *OpenAi) Chat(uuid string, model *dal.Model, reqBody *dto.OpenAiReqFromC
 	if err != nil {
 		return errors.Join(err, o.err)
 	}
-	req, err := http.NewRequest("POST", util.OpenAiEndPoint, bytes.NewBuffer(reqByte))
+	req, err := http.NewRequest("POST", OpenAiEndPoint, bytes.NewBuffer(reqByte))
 	if err != nil {
 		return errors.Join(err, o.err)
 	}
@@ -75,10 +75,9 @@ func (o *OpenAi) Chat(uuid string, model *dal.Model, reqBody *dto.OpenAiReqFromC
 	defer resp.Body.Close()
 
 	responseMessages := make([]dto.OpenAiMessage, 0)
-	const bufferSize = 8192
-	bodyRead := make([]byte, bufferSize)
+	bodyRead := make([]byte, ChatBufferSize)
 	// sometimes OpenAI will return an incomplete JSON, we save it to last
-	last := make([]byte, bufferSize/4)
+	last := make([]byte, ChatBufferSize/4)
 	lastLen := 0
 
 	for {
@@ -147,7 +146,7 @@ func (o *OpenAi) Chat(uuid string, model *dal.Model, reqBody *dto.OpenAiReqFromC
 					responseChan <- message.Choices[0].Delta.Content
 				}
 				// read the remainder to next buffer
-				next := make([]byte, bufferSize/4)
+				next := make([]byte, ChatBufferSize/4)
 				decoderLen, err := dec.Buffered().Read(next)
 				if err != nil && err != io.EOF {
 					return errors.Join(fmt.Errorf("read remainder from decoder to next failed: %w", err), o.err)

@@ -137,6 +137,13 @@ func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
 }
 
 func (h *Handler) jwtCheck(c echo.Context) (*util.Claims, error) {
+	if !h.conf.AuthEnabled {
+		return &util.Claims{
+			Uuid:     "00000000-0000-4000-8000-000000000000",
+			Username: "test",
+			ClientId: "test",
+		}, nil
+	}
 	accessTokenCookie, err := c.Cookie(CookieAccessToken)
 	if err != nil {
 		return nil, errors.Join(fmt.Errorf("get cookie failed: %w", err), h.err)
