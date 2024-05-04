@@ -18,7 +18,7 @@ func (h *Handler) chat(c echo.Context) error {
 	uuid := c.Get(KeyUuid).(string)
 	replyChan := make(chan string, ChanSize)
 	errChan := make(chan error, 1)
-	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
+	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream; charset=utf-8")
 	c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
 	c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
 	// get and check model

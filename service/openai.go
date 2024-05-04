@@ -91,6 +91,12 @@ func (o *OpenAi) Chat(uuid string, model *dal.Model, reqBody *dto.OpenAiReqFromC
 		}
 
 		if n > 0 {
+			// if n < 6 {
+			// 	// if the read bytes are less than 6, it doesn't contain a complete "data: "
+			// 	last = bodyRead[:n]
+			// 	lastLen = n
+			// 	continue
+			// }
 			// start from the prefix "data: " to remove the malformed JSON
 			startPos := bytes.Index(bodyRead, []byte("data: "))
 			if startPos == -1 {
