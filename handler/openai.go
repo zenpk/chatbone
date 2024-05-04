@@ -1,8 +1,9 @@
 package handler
 
 import (
-	"encoding/json"
+	"bytes"
 	"errors"
+	"io"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -23,7 +24,6 @@ func (h *Handler) chat(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream")
 	c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
 	c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
-	enc := json.NewEncoder(c.Response())
 	// get and check model
 	model, err := h.modelService.GetAndCheckModelById(req.ModelId)
 	if err != nil {
@@ -37,10 +37,7 @@ func (h *Handler) chat(c echo.Context) error {
 		for {
 			select {
 			case reply := <-replyChan:
-				if err := enc.Encode(dto.CommonResp{
-					Code: dto.ErrOk,
-					Msg:  reply,
-				}); err != nil {
+				if _, err := io.Copy(c.Response(), bytes.NewReader([]byte(reply))); err != nil {
 					return err
 				}
 				c.Response().Flush()
