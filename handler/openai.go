@@ -1,9 +1,7 @@
 package handler
 
 import (
-	"bytes"
 	"errors"
-	"io"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -37,7 +35,10 @@ func (h *Handler) chat(c echo.Context) error {
 		for {
 			select {
 			case reply := <-replyChan:
-				if _, err := io.Copy(c.Response(), bytes.NewReader([]byte(reply))); err != nil {
+				event := Event{
+					Data: []byte(reply),
+				}
+				if err := event.MarshalTo(c.Response()); err != nil {
 					return err
 				}
 				c.Response().Flush()
