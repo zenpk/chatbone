@@ -2,7 +2,6 @@ package handler
 
 import (
 	"errors"
-	"net/http"
 
 	"github.com/labstack/echo/v4"
 	"github.com/zenpk/chatbone/dal"
@@ -42,9 +41,6 @@ func (h *Handler) chat(c echo.Context) error {
 					return err
 				}
 				c.Response().Flush()
-				if reply == dto.MessageEnding {
-					c.Response().WriteHeader(http.StatusOK)
-				}
 			case err := <-errChan:
 				if err != nil {
 					h.logger.Errorf("chat error: %v", err)

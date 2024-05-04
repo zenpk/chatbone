@@ -38,9 +38,11 @@ func (ev *Event) MarshalTo(w io.Writer) error {
 	}
 
 	if len(ev.Data) > 0 {
-		// if _, err := fmt.Fprintf(w, "id: %s\n", ev.ID); err != nil {
-		// 	return err
-		// }
+		if len(ev.ID) > 0 {
+			if _, err := fmt.Fprintf(w, "id: %s\n", ev.ID); err != nil {
+				return err
+			}
+		}
 
 		sd := bytes.Split(ev.Data, []byte("\n"))
 		for i := range sd {
