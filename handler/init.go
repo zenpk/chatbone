@@ -120,7 +120,7 @@ func (h *Handler) setRoutes() {
 	// auth group
 	g := h.e.Group("/")
 	g.Use(h.jwtMiddleware)
-	g.POST("/chat", h.chat)
+	g.POST("chat", h.chat)
 }
 
 func (h *Handler) jwtMiddleware(next echo.HandlerFunc) echo.HandlerFunc {
