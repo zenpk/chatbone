@@ -14,6 +14,7 @@ import (
 type Chatter interface {
 	ReadBody(*http.Response) error
 	CanProcess() bool
+	IsFinished() bool
 	ParseJson() (any, error)
 }
 
@@ -27,7 +28,7 @@ func chat(chatter Chatter, resp *http.Response, respChan chan<- any) ([]any, err
 			return nil, errReadBody
 		}
 		if !chatter.CanProcess() {
-			if errors.Is(errReadBody, io.EOF) {
+			if errors.Is(errReadBody, io.EOF) || chatter.IsFinished() {
 				return responseArr, nil
 			}
 			continue
@@ -83,6 +84,10 @@ func (o *OpenAiChatter) CanProcess() bool {
 	}
 	startPos := bytes.Index(o.buffer, []byte(o.prefix))
 	return startPos != -1
+}
+
+func (o *OpenAiChatter) IsFinished() bool {
+	return o.finished
 }
 
 func (o *OpenAiChatter) ParseJson() (any, error) {
