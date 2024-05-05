@@ -72,7 +72,7 @@ func (o *OpenAiChatter) ReadBody(resp *http.Response) (int, error) {
 			return 0, fmt.Errorf("read body to buffer failed: %w", err)
 		}
 	}
-	o.bufferPos = n
+	o.bufferPos += n
 	return n, nil
 }
 
