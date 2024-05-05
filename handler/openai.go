@@ -16,7 +16,7 @@ func (h *Handler) chat(c echo.Context) error {
 		return err
 	}
 	uuid := c.Get(KeyUuid).(string)
-	replyChan := make(chan string, ChanSize)
+	replyChan := make(chan any, ChanSize)
 	errChan := make(chan error, 1)
 	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream; charset=utf-8")
 	c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
@@ -34,8 +34,9 @@ func (h *Handler) chat(c echo.Context) error {
 		for {
 			select {
 			case reply := <-replyChan:
+				converted := reply.(dto.OpenAiResp)
 				event := Event{
-					Data: []byte(reply),
+					Data: []byte(converted.Choices[0].Delta.Content),
 				}
 				if err := event.MarshalTo(c.Response()); err != nil {
 					return err

@@ -1,6 +1,5 @@
 package service
 
-const (
-	ChatBufferSize = 8192
-	OpenAiEndPoint = "https://api.openai.com/v1/chat/completions"
-)
+import "errors"
+
+var ErrIncompleteJson = errors.New("incomplete json")
