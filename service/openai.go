@@ -75,7 +75,8 @@ func (o *OpenAi) Chat(uuid string, model *dal.Model, reqBody *dto.OpenAiReqFromC
 	responseAny, nil := chat(openAiChatter, resp, respChan)
 	responseMessages := make([]dto.OpenAiMessage, len(responseAny))
 	for i, message := range responseAny {
-		responseMessages[i] = message.(dto.OpenAiMessage)
+		// the response is guaranteed to have valid choices and delta
+		responseMessages[i] = *(message.(dto.OpenAiResp).Choices[0].Delta)
 	}
 	// update the history
 	inToken, err := o.countTokensFromMessages(reqBody.Messages, model)
