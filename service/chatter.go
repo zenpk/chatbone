@@ -52,6 +52,7 @@ type OpenAiChatter struct {
 	bufferSize int
 	prefix     string
 	suffix     string
+	finished   bool
 }
 
 func newOpenAiChatter(bufferSize int, prefix, suffix string) *OpenAiChatter {
@@ -61,6 +62,7 @@ func newOpenAiChatter(bufferSize int, prefix, suffix string) *OpenAiChatter {
 	o.bufferSize = bufferSize
 	o.prefix = prefix
 	o.suffix = suffix
+	o.finished = false
 	return o
 }
 
@@ -76,6 +78,9 @@ func (o *OpenAiChatter) ReadBody(resp *http.Response) error {
 }
 
 func (o *OpenAiChatter) CanProcess() bool {
+	if o.finished {
+		return false
+	}
 	startPos := bytes.Index(o.buffer, []byte(o.prefix))
 	return startPos != -1
 }
@@ -84,6 +89,19 @@ func (o *OpenAiChatter) ParseJson() (any, error) {
 	startPos := bytes.Index(o.buffer, []byte(o.prefix))
 	if startPos == -1 {
 		return nil, errors.New("parse JSON failed, data invalid")
+	}
+	// check ending
+	if bytes.Index(o.buffer[startPos+len(o.prefix):o.bufferPos], []byte(dto.OpenAiMessageEnding)) == 0 {
+		o.finished = true
+		return dto.OpenAiResp{
+			Choices: []*dto.OpenAiChoice{
+				{
+					Delta: &dto.OpenAiMessage{
+						Content: dto.OpenAiMessageEnding,
+					},
+				},
+			},
+		}, nil
 	}
 	buf := bytes.NewBuffer(o.buffer[startPos+len(o.prefix) : o.bufferPos])
 	dec := json.NewDecoder(buf)

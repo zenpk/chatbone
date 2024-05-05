@@ -71,7 +71,7 @@ func (o *OpenAi) Chat(uuid string, model *dal.Model, reqBody *dto.OpenAiReqFromC
 		return errors.Join(err, o.err)
 	}
 	defer resp.Body.Close()
-	openAiChatter := newOpenAiChatter(8192, "data: ", dto.MessageEnding)
+	openAiChatter := newOpenAiChatter(8192, "data: ", dto.OpenAiMessageEnding)
 	responseAny, nil := chat(openAiChatter, resp, respChan)
 	responseMessages := make([]dto.OpenAiMessage, len(responseAny))
 	for i, message := range responseAny {
