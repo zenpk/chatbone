@@ -12,9 +12,8 @@ import (
 )
 
 type Chatter interface {
-	ReadBody(*http.Response) (int, error)
+	ReadBody(*http.Response) error
 	CanProcess() bool
-	BodyEmpty() bool
 	ParseJson() (any, error)
 }
 
@@ -23,15 +22,15 @@ type Chatter interface {
 func chat(chatter Chatter, resp *http.Response, respChan chan<- any) ([]any, error) {
 	responseArr := make([]any, 0)
 	for {
-		n, err := chatter.ReadBody(resp)
-		if err != nil {
-			return nil, err
+		errReadBody := chatter.ReadBody(resp)
+		if errReadBody != nil && !errors.Is(errReadBody, io.EOF) {
+			return nil, errReadBody
 		}
 		if !chatter.CanProcess() {
+			if errors.Is(errReadBody, io.EOF) {
+				return responseArr, nil
+			}
 			continue
-		}
-		if n <= 0 && chatter.BodyEmpty() {
-			return responseArr, nil
 		}
 		parsed, err := chatter.ParseJson()
 		if err != nil {
@@ -65,24 +64,20 @@ func newOpenAiChatter(bufferSize int, prefix, suffix string) *OpenAiChatter {
 	return o
 }
 
-func (o *OpenAiChatter) ReadBody(resp *http.Response) (int, error) {
+func (o *OpenAiChatter) ReadBody(resp *http.Response) error {
 	n, err := resp.Body.Read(o.buffer[o.bufferPos:])
 	if err != nil {
 		if err != io.EOF {
-			return 0, fmt.Errorf("read body to buffer failed: %w", err)
+			return fmt.Errorf("read body to buffer failed: %w", err)
 		}
 	}
 	o.bufferPos += n
-	return n, nil
+	return nil
 }
 
 func (o *OpenAiChatter) CanProcess() bool {
 	startPos := bytes.Index(o.buffer, []byte(o.prefix))
 	return startPos != -1
-}
-
-func (o *OpenAiChatter) BodyEmpty() bool {
-	return o.bufferPos == 0
 }
 
 func (o *OpenAiChatter) ParseJson() (any, error) {
