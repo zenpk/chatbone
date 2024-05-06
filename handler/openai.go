@@ -42,6 +42,9 @@ func (h *Handler) chat(c echo.Context) error {
 				if err := event.MarshalTo(w); err != nil {
 					return err
 				}
+				w.Header().Set(echo.HeaderContentType, "text/event-stream; charset=utf-8")
+				w.Header().Set(echo.HeaderCacheControl, "no-cache")
+				w.Header().Set(echo.HeaderConnection, "keep-alive")
 				w.Flush()
 			case err := <-errChan:
 				if err != nil {
