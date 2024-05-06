@@ -18,9 +18,10 @@ func (h *Handler) chat(c echo.Context) error {
 	uuid := c.Get(KeyUuid).(string)
 	replyChan := make(chan any, ChanSize)
 	errChan := make(chan error, 1)
-	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream; charset=utf-8")
-	c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
-	c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
+	w := c.Response()
+	w.Header().Set(echo.HeaderContentType, "text/event-stream; charset=utf-8")
+	w.Header().Set(echo.HeaderCacheControl, "no-cache")
+	w.Header().Set(echo.HeaderConnection, "keep-alive")
 	// get and check model
 	model, err := h.modelService.GetAndCheckModelById(req.ModelId)
 	if err != nil {
@@ -38,10 +39,10 @@ func (h *Handler) chat(c echo.Context) error {
 				event := Event{
 					Data: []byte(converted.Choices[0].Delta.Content),
 				}
-				if err := event.MarshalTo(c.Response()); err != nil {
+				if err := event.MarshalTo(w); err != nil {
 					return err
 				}
-				c.Response().Flush()
+				w.Flush()
 			case err := <-errChan:
 				if err != nil {
 					h.logger.Errorf("chat error: %v", err)
