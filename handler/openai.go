@@ -22,6 +22,7 @@ func (h *Handler) chat(c echo.Context) error {
 	c.Response().Header().Set(echo.HeaderContentType, "text/event-stream; charset=utf-8")
 	c.Response().Header().Set(echo.HeaderCacheControl, "no-cache")
 	c.Response().Header().Set(echo.HeaderConnection, "keep-alive")
+	c.Response().Header().Set("X-Accel-Buffering", "no") // necessary for disabling NGINX buffer
 	c.Response().WriteHeader(http.StatusOK)
 	// get and check model
 	model, err := h.modelService.GetAndCheckModelById(req.ModelId)
