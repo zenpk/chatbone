@@ -1,8 +1,10 @@
 package handler
 
 import (
+	"encoding/base64"
 	"errors"
 	"net/http"
+	"strings"
 
 	"github.com/labstack/echo/v4"
 	"github.com/zenpk/chatbone/dto"
@@ -101,8 +103,27 @@ func (h *Handler) setCookies(c echo.Context, tokenResp *dto.RespFromOAuth) error
 			Value:    tokenResp.RefreshToken,
 			HttpOnly: true,
 			Secure:   true,
+			Domain:   h.conf.Domain,
 			Path:     h.conf.CookiePathPrefix + "/refresh",
 		})
 	}
+	// info token, basically the same as access token payload
+	split := strings.Split(tokenResp.AccessToken, ".")
+	if len(split) != 3 {
+		return errors.New("invalid access token")
+	}
+	infoToken := make([]byte, 1024)
+	n, err := base64.RawStdEncoding.Decode(infoToken, []byte(split[1]))
+	if err != nil {
+		return err
+	}
+	c.SetCookie(&http.Cookie{
+		Name:     CookieInfoToken,
+		Value:    string(infoToken[:n]),
+		HttpOnly: false,
+		Secure:   true,
+		Domain:   h.conf.Domain,
+		Path:     h.conf.CookiePathPrefix + "/",
+	})
 	return nil
 }

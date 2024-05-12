@@ -72,8 +72,12 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
+	userService, err := service.NewUser(conf, logger, db, cache)
+	if err != nil {
+		panic(err)
+	}
 
-	hd, err := handler.New(conf, logger, modelService, oAuthService, messageService, openAiService)
+	hd, err := handler.New(conf, logger, modelService, oAuthService, messageService, openAiService, userService)
 	if err != nil {
 		panic(err)
 	}

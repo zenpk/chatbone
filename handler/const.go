@@ -6,5 +6,6 @@ const (
 	KeyUuid            = "uuid"
 	CookieAccessToken  = "accessToken"
 	CookieRefreshToken = "refreshToken"
+	CookieInfoToken    = "infoToken"
 	ActionChat         = "chat"
 )

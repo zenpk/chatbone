@@ -23,6 +23,7 @@ type Handler struct {
 	oAuthService   *service.OAuth
 	messageService *service.Message
 	openAiService  *service.OpenAi
+	userService    *service.User
 
 	e            *echo.Echo
 	conf         *util.Configuration
@@ -33,6 +34,7 @@ type Handler struct {
 
 func New(conf *util.Configuration, logger util.ILogger,
 	modelService *service.Model, oAuthService *service.OAuth, messageService *service.Message, openAiService *service.OpenAi,
+	userService *service.User,
 ) (*Handler, error) {
 	h := new(Handler)
 	h.conf = conf
@@ -43,6 +45,7 @@ func New(conf *util.Configuration, logger util.ILogger,
 	h.oAuthService = oAuthService
 	h.messageService = messageService
 	h.openAiService = openAiService
+	h.userService = userService
 
 	// get JWK from the OAuth 2.0 endpoint
 	client := http.Client{
